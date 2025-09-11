@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="sky">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>문장읽어주기 – to부정사 대화</title>
+  <style>
+    /* ===== Theme Variables ===== */
+    :root{
+      /* 기본값 (fallback) */
+      --bg1:#eef4ff; --bg2:#f7fbff;
+      --card:#ffffff; --ink:#1f2937; --sub:#6b7280; --accent:#2563eb;
+      --border:#e5e7eb; --shadow:0 10px 25px rgba(0,0,0,.08);
+    }
+    /* Sky (더 진하게 조정) */
+    [data-theme="sky"]{
+      /* 살짝 더 진하고 선명한 블루 */
+      --bg1:#e2e8ff;  /* 약간 더 진한 파스텔 */
+      --bg2:#dbeafe;  /* blue-100 계열 */
+      --accent:#1d4ed8; /* blue-700 */
+    }
+    /* 다른 테마는 그대로 유지 (원하면 숨겨도 됨) */
+    [data-theme="emerald"]{ --bg1:#ecfdf5; --bg2:#f0fdf4; --accent:#059669; }
+    [data-theme="indigo"]{ --bg1:#eef2ff; --bg2:#f5f3ff; --accent:#4f46e5; }
+    [data-theme="violet"]{ --bg1:#f5f3ff; --bg2:#ede9fe; --accent:#7c3aed; }
+    [data-theme="rose"]{ --bg1:#fff1f2; --bg2:#ffe4e6; --accent:#e11d48; }
+
+    /* ===== Base ===== */
+    html,body{margin:0;padding:0;background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--ink)}
+    .wrap{max-width:860px;margin:24px auto;padding:16px}
+    header{margin-bottom:16px}
+    h1{font-size:22px;margin:0 0 6px 0}
+    .hint{color:var(--sub);font-size:14px}
+
+    .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 18px}
+    button{border:0;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;box-shadow:var(--shadow)}
+    button.sec{background:#0ea5e9}
+    .rate{margin-left:auto;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px 10px}
+    .rate input{width:120px}
+
+    .theme{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);padding:6px 10px;border-radius:12px}
+    .theme .label{font-size:13px;color:var(--sub);margin-right:4px}
+    .chip{appearance:none;border:1px solid var(--border);background:#fff;color:#111;font-size:12px;border-radius:999px;padding:6px 10px;cursor:pointer}
+    .chip.selected{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent)}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+    .card{
+      background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px;
+      box-shadow:var(--shadow);position:relative;transition:transform .05s ease, box-shadow .2s ease
+    }
+    .card:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+    .who{font-size:12px;color:#64748b;margin-bottom:6px}
+    .en{font-size:18px;line-height:1.45;word-break:keep-all}
+    .playtip{position:absolute;right:12px;top:10px;font-size:12px;color:#94a3b8}
+    .active{outline:3px solid color-mix(in srgb, var(--accent) 35%, transparent)}
+    footer{margin-top:18px;color:var(--sub);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>문장읽어주기 · to부정사(대화)</h1>
+      <div class="hint">문장을 클릭하면 영어로 읽어줘요. (ZWSP 모드로 첫 단어 끊김 최소화)</div>
+    </header>
+
+    <div class="bar">
+      <button id="playAll">전체 재생</button>
+      <button id="stopAll" class="sec">정지</button>
+
+      <!-- 테마 스위처 (원치 않으면 이 div 전체를 삭제해도 됨) -->
+      <div class="theme" id="themeBox" role="group" aria-label="톤 컬러 선택">
+        <span class="label">톤 컬러</span>
+        <button class="chip" data-theme="sky"><span class="dot" style="background:#1d4ed8"></span>Sky</button>
+        <button class="chip" data-theme="emerald"><span class="dot" style="background:#059669"></span>Emerald</button>
+        <button class="chip" data-theme="indigo"><span class="dot" style="background:#4f46e5"></span>Indigo</button>
+        <button class="chip" data-theme="violet"><span class="dot" style="background:#7c3aed"></span>Violet</button>
+        <button class="chip" data-theme="rose"><span class="dot" style="background:#e11d48"></span>Rose</button>
+      </div>
+
+      <label class="rate">
+        <span>속도</span>
+        <input id="rate" type="range" min="0.7" max="1.2" step="0.05" value="0.95" />
+        <span id="rateVal">0.95</span>
+      </label>
+    </div>
+
+    <section id="cards" class="grid" aria-label="대화 카드 목록"></section>
+
+    <footer>Tip: 카드 클릭 → 해당 문장 재생 / ‘전체 재생’은 위에서부터 순서대로 읽습니다.</footer>
+  </div>
+
+  <script>
+    // ===== 데이터(대화) =====
+    const DIALOG = [
+      { who:"Jina",  en:"Minho, what is your dream?" },
+      { who:"Minho", en:"My dream is to have a true friend." },
+      { who:"Jina",  en:"I want a friend to play with after school." },
+      { who:"Minho", en:"Yes. Everyone needs someone to trust." },
+      { who:"Jina",  en:"Yesterday, I visited Jiho to help him with homework." },
+      { who:"Minho", en:"That’s great! You are a good friend to help others." },
+      { who:"Jina",  en:"The best way to keep a friend is to be kind." },
+      { who:"Minho", en:"Yes, I want to be a good friend too." }
+    ];
+
+    // ===== 요소 =====
+    const cardsEl = document.getElementById('cards');
+    const rateEl  = document.getElementById('rate');
+    const rateVal = document.getElementById('rateVal');
+    const playAllBtn = document.getElementById('playAll');
+    const stopAllBtn = document.getElementById('stopAll');
+    const themeBox = document.getElementById('themeBox');
+
+    // ===== Theme handling =====
+    const THEME_KEY = 'reader_theme';
+    function applyTheme(name){
+      document.documentElement.setAttribute('data-theme', name);
+      localStorage.setItem(THEME_KEY, name);
+      if (themeBox){
+        [...themeBox.querySelectorAll('.chip')].forEach(b=>{
+          b.classList.toggle('selected', b.dataset.theme===name);
+        });
+      }
+    }
+    if (themeBox){
+      themeBox.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.chip');
+        if(!btn) return;
+        applyTheme(btn.dataset.theme);
+      });
+    }
+    // 저장된 테마 불러오기 (없으면 sky)
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'sky';
+    applyTheme(savedTheme);
+
+    // ===== Voice =====
+    let voices = [];
+    function loadVoices() {
+      voices = speechSynthesis.getVoices().filter(v => /en-|English/i.test(v.lang || v.name));
+      const prefer = ["en-US", "en_GB", "en-"];
+      voices.sort((a,b)=>{
+        const s = (t)=> prefer.findIndex(p=> (t.lang||"").includes(p));
+        return (s(a)===-1?99:s(a)) - (s(b)===-1?99:s(b));
+      });
+    }
+    loadVoices();
+    if (typeof speechSynthesis !== "undefined") {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // ===== TTS (ZWSP + warm-up) =====
+    function speak(text, {rate=0.95} = {}) {
+      if (!window.speechSynthesis) return;
+      speechSynthesis.cancel();
+
+      const ZWSP = "\u200B";
+      const warm = new SpeechSynthesisUtterance(ZWSP);
+      warm.rate = rate; warm.volume = 0; warm.pitch = 1;
+      if (voices[0]) warm.voice = voices[0];
+
+      const utt = new SpeechSynthesisUtterance(ZWSP + text);
+      utt.rate = rate; utt.pitch = 1; utt.volume = 1;
+      if (voices[0]) utt.voice = voices[0];
+
+      speechSynthesis.speak(warm);
+      setTimeout(()=> speechSynthesis.speak(utt), 10);
+      return utt;
+    }
+
+    // ===== UI =====
+    function renderCards(list){
+      cardsEl.innerHTML = "";
+      list.forEach((row, i)=>{
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.tabIndex = 0;
+        card.dataset.idx = i;
+
+        const who = document.createElement('div');
+        who.className = 'who';
+        who.textContent = row.who;
+
+        const en = document.createElement('div');
+        en.className = 'en';
+        en.textContent = row.en;
+
+        const tip = document.createElement('div');
+        tip.className = 'playtip';
+        tip.textContent = 'Click to play';
+
+        card.appendChild(who);
+        card.appendChild(en);
+        card.appendChild(tip);
+
+        // 문장읽어주기: 카드 클릭 시 재생
+        card.addEventListener('click', ()=>playOne(i, true));
+        card.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter'||e.key===' '){ e.preventDefault(); playOne(i,true); }
+        });
+
+        cardsEl.appendChild(card);
+      });
+    }
+
+    let playingSeq = false;
+    let currentIdx = -1;
+
+    function highlight(idx, on=true){
+      [...cardsEl.children].forEach(c=>c.classList.remove('active'));
+      const card = cardsEl.querySelector(`[data-idx="${idx}"]`);
+      if (card && on) card.classList.add('active');
+    }
+
+    function playOne(idx, cancelSeq=false){
+      if (cancelSeq && playingSeq) { playingSeq = false; }
+      currentIdx = idx;
+      highlight(idx,true);
+      const utt = speak(DIALOG[idx].en, {rate: parseFloat(rateEl.value)});
+      if (!utt) return;
+      utt.onend = ()=>{ if (!playingSeq) highlight(idx,false); };
+      utt.onerror = ()=>{ if (!playingSeq) highlight(idx,false); };
+    }
+
+    function nextInSeq(){
+      if (!playingSeq) return;
+      currentIdx++;
+      if (currentIdx >= DIALOG.length){
+        playingSeq = false;
+        highlight(-1,false);
+        return;
+      }
+      playOne(currentIdx, false);
+    }
+
+    playAllBtn.addEventListener('click', ()=>{
+      if (playingSeq){ return; }
+      playingSeq = true;
+      currentIdx = -1;
+      nextInSeq();
+    });
+
+    stopAllBtn.addEventListener('click', ()=>{
+      playingSeq = false;
+      speechSynthesis.cancel();
+      highlight(-1,false);
+    });
+
+    rateEl.addEventListener('input', ()=>{ rateVal.textContent = rateEl.value; });
+
+    // 첫 렌더
+    renderCards(DIALOG);
+
+    // 사용자 첫 상호작용 전 자동 재생 차단 대비: 아무 클릭 시 예열
+    window.addEventListener('click', function once(){
+      if (!window.speechSynthesis) return;
+      const warm = new SpeechSynthesisUtterance("\u200B");
+      warm.volume = 0; warm.rate = parseFloat(rateEl.value);
+      if (voices[0]) warm.voice = voices[0];
+      speechSynthesis.speak(warm);
+      window.removeEventListener('click', once);
+    }, {once:true});
+  </script>
+</body>
+</html>
