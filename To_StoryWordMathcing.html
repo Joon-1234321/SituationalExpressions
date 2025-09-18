@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>단어매칭게임 (세트 A, B)</title>
+<style>
+  body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom,#e0f7ff,#f8fcff);
+    margin:0; padding:24px;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  h1{color:#0369a1; margin:0 0 10px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px}
+  select,button{
+    padding:8px 12px;border-radius:8px;border:1px solid #ccc;font-weight:bold;cursor:pointer;
+  }
+  button.primary{background:#0ea5e9;color:#fff;border:none}
+  .stats{color:#0c4a6e;font-weight:700;margin-left:6px}
+  #game{
+    display:grid;gap:12px;margin-top:14px;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    width:min(100%,960px);
+  }
+  .card{
+    padding:14px;text-align:center;font-weight:800;border-radius:12px;
+    cursor:pointer;transition:transform .15s ease,filter .2s ease,background .2s ease;
+  }
+  .card:hover{transform:scale(1.05)}
+  .card.word{background:#bae6fd}   /* 단어 = 연파랑 */
+  .card.meaning{background:#bbf7d0}/* 뜻   = 연녹색 */
+  .card.dim{filter:brightness(0.9)}
+  .card.hidden{visibility:hidden}
+</style>
+</head>
+<body>
+  <h1>단어매칭게임</h1>
+  <div class="toolbar">
+    <label for="setSel">세트 선택:</label>
+    <select id="setSel">
+      <option value="SET_A">세트 A · 14개 (mistake~bravest)</option>
+      <option value="SET_B">세트 B · 12개 (scary~friendship)</option>
+    </select>
+    <button id="restart" class="primary">게임 시작 / 다시하기</button>
+    <span class="stats" id="timer">⏱ Time: 0.0s</span>
+    <span class="stats" id="best">🏆 Best: --</span>
+  </div>
+  <div id="game"></div>
+
+<script>
+const DATASETS = {
+  SET_A: [
+    {word:'mistake',meaning:'실수'},
+    {word:'kindness',meaning:'친절'},
+    {word:'clear the air',meaning:'오해를 풀다'},
+    {word:'choice',meaning:'선택'},
+    {word:'choose',meaning:'선택하다'},
+    {word:'perfect',meaning:'완벽한'},
+    {word:'avoid',meaning:'피하다'},
+    {word:'take turns',meaning:'번갈아 하다'},
+    {word:'sincere',meaning:'진심 어린'},
+    {word:'listen',meaning:'듣다'},
+    {word:'explain',meaning:'설명하다'},
+    {word:'confusion',meaning:'혼란'},
+    {word:'brave',meaning:'용감한'},
+    {word:'bravest',meaning:'가장 용감한'},
+  ],
+  SET_B: [
+    {word:'scary',meaning:'무서운'},
+    {word:'upset',meaning:'속상한'},
+    {word:'misunderstanding',meaning:'오해'},
+    {word:'trust',meaning:'신뢰하다'},
+    {word:'rebuild',meaning:'재건하다'},
+    {word:'wish',meaning:'소원, 바라다'},
+    {word:'surprised',meaning:'놀란'},
+    {word:'note',meaning:'메모, 기록'},
+    {word:'apologize',meaning:'사과하다'},
+    {word:'need',meaning:'필요'},
+    {word:'clear',meaning:'분명한, 치우다'},
+    {word:'friendship',meaning:'우정'},
+  ],
+};
+
+const gameEl=document.getElementById('game');
+const timerEl=document.getElementById('timer');
+const bestEl=document.getElementById('best');
+const restart=document.getElementById('restart');
+const setSel=document.getElementById('setSel');
+
+let firstCard=null,matches=0,startTime=0,timerInterval=null,currentSetKey=setSel.value;
+
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function bestKey(){return `bestRecord_${currentSetKey}`;}
+function loadBest(){const b=localStorage.getItem(bestKey());bestEl.textContent=`🏆 Best: ${b?b+'s':'--'}`;}
+function startTimer(){startTime=Date.now();clearInterval(timerInterval);timerInterval=setInterval(()=>{const t=((Date.now()-startTime)/1000).toFixed(1);timerEl.textContent=`⏱ Time: ${t}s`;},100);}
+function stopTimer(){clearInterval(timerInterval);}
+
+function buildCards(dataset){
+  gameEl.innerHTML=''; firstCard=null; matches=0;
+  const raw=[];
+  dataset.forEach(item=>{
+    raw.push({text:item.word,pair:item.meaning,type:'word'});
+    raw.push({text:item.meaning,pair:item.word,type:'meaning'});
+  });
+  shuffle(raw).forEach(p=>{
+    const card=document.createElement('div');
+    card.className='card '+p.type;
+    card.textContent=p.text; card.dataset.pair=p.pair;
+    card.addEventListener('click',()=>onSelect(card));
+    gameEl.appendChild(card);
+  });
+}
+function onSelect(card){
+  if(card.classList.contains('hidden'))return;
+  if(!firstCard){firstCard=card;card.classList.add('dim');return;}
+  if(firstCard===card)return;
+  if(firstCard.dataset.pair===card.textContent){
+    firstCard.classList.add('hidden'); card.classList.add('hidden');
+    matches++; firstCard=null;
+    if(matches===DATASETS[currentSetKey].length)endGame();
+  }else{const a=firstCard;firstCard=null;setTimeout(()=>{a.classList.remove('dim');card.classList.remove('dim');},300);}
+}
+function endGame(){
+  stopTimer();
+  const time=((Date.now()-startTime)/1000).toFixed(1);
+  setTimeout(()=>{
+    alert(`🎉 Clear! 기록: ${time}s`);
+    const prev=localStorage.getItem(bestKey());
+    if(!prev||parseFloat(time)<parseFloat(prev)){localStorage.setItem(bestKey(),time);}
+    loadBest(); startGame();
+  },20);
+}
+function startGame(){buildCards(DATASETS[currentSetKey]);loadBest();startTimer();}
+
+restart.addEventListener('click',startGame);
+setSel.addEventListener('change',()=>{currentSetKey=setSel.value;startGame();});
+startGame();
+</script>
+</body>
+</html>

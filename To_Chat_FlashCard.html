@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sentence Flashcards — Robust TTS + Voice Picker</title>
+<style>
+  :root{ --bg:#f4f8ff; --ink:#0b2239; --muted:#4a6a8a; --shadow:0 10px 22px rgba(0,0,0,.08); }
+  *{ box-sizing:border-box }
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  header{
+    position:sticky; top:0; z-index:5; background:#fff; box-shadow: var(--shadow);
+    padding: 14px 18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  }
+  header .title{ font-weight:800; letter-spacing:.2px }
+  header .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  button, select, label{
+    border-radius:10px; border:1px solid #d6e0ee; padding:10px 12px; background:#f8fbff; color:var(--ink);
+    font-weight:600; cursor:pointer;
+  }
+  button:hover{ background:#eef6ff }
+  select{ cursor:pointer }
+  .toggle{ display:inline-flex; gap:6px; align-items:center; padding:8px 10px; background:#f3f7ff }
+  .log{ font-size:12px; color:var(--muted) }
+  main{ padding:22px }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:16px }
+  .card{ height:180px; perspective:1000px; outline:0 }
+  .card-inner{
+    position:relative; width:100%; height:100%; transform-style:preserve-3d;
+    transition: transform .55s cubic-bezier(.2,.8,.2,1); border-radius:18px; box-shadow:var(--shadow); cursor:pointer;
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg) }
+  .face{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    padding:18px; text-align:center; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border-radius:18px; color:#fff; font-weight:800; font-size:20px; line-height:1.25;
+  }
+  .front{ background:#1e88e5 }
+  .back{ background:#43a047; transform:rotateY(180deg) }
+  .c1 .front{background:#1e88e5}.c1 .back{background:#43a047}
+  .c2 .front{background:#8e24aa}.c2 .back{background:#fb8c00}
+  .c3 .front{background:#3949ab}.c3 .back{background:#00897b}
+  .c4 .front{background:#d81b60}.c4 .back{background:#5e35b1}
+  .face>*{ pointer-events:none }
+  @media (max-width:480px){ .card{height:160px} .face{font-size:18px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">Sentence Flashcards</div>
+  <div class="row">
+    <button id="testBtn">🔊 TTS 테스트</button>
+    <label class="toggle"><input type="checkbox" id="crispToggle"> 앞머리 또렷 모드</label>
+    <label class="toggle">지연(ms): <input type="number" id="delayInput" value="60" min="0" max="300" style="width:70px;padding:6px 8px;border-radius:8px;border:1px solid #d6e0ee;background:#fff"></label>
+    <select id="voiceSelect" title="Voice"></select>
+    <span id="status" class="log">Loading voices…</span>
+  </div>
+</header>
+<main>
+  <div id="cards" class="grid"></div>
+</main>
+
+<script>
+// ===== Data (8 sentences) =====
+const DATA = [
+  { en: "Minho, what is your dream?", ko: "민호야, 너의 꿈이 무엇이니?" },
+  { en: "My dream is to have a true friend.", ko: "나의 꿈은 진정한 친구를 갖는 것이야." },
+  { en: "I want a friend to play with after school.", ko: "나는 방과 후에 같이 놀 친구를 원해." },
+  { en: "Yes. Everyone needs someone to trust.", ko: "그래. 모든 사람은 믿을 수 있는 누군가가 필요하지." },
+  { en: "Yesterday, I visited Jiho to help him with homework.", ko: "어제 나는 지호를 방문해서 숙제를 도와줬어." },
+  { en: "That’s great! You are a good friend to help others.", ko: "정말 멋지다! 다른 사람을 돕는 좋은 친구구나." },
+  { en: "The best way to keep a friend is to be kind.", ko: "친구를 지키는 가장 좋은 방법은 친절한 거야." },
+  { en: "Yes, I want to be a good friend too.", ko: "그래, 나도 좋은 친구가 되고 싶어." }
+];
+
+// ===== Build cards =====
+const container = document.getElementById('cards');
+const paletteClass = (i)=> ['c1','c2','c3','c4'][i % 4];
+DATA.forEach((d,i)=>{
+  const card = document.createElement('div');
+  card.className = `card ${paletteClass(i)}`;
+  card.tabIndex = 0;
+  card.setAttribute('role','button');
+  card.setAttribute('aria-label', d.en + " — flip and read");
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="face front"></div>
+      <div class="face back"></div>
+    </div>`;
+  card.querySelector('.front').textContent = d.en;
+  card.querySelector('.back').textContent = d.ko;
+  const handler = (e)=>{
+    if (e.type === 'keypress' && !(e.key === 'Enter' || e.key === ' ')) return;
+    e.preventDefault();
+    speakAndFlip(card, d.en);
+  };
+  card.addEventListener('click', handler);
+  card.addEventListener('keypress', handler);
+  container.appendChild(card);
+});
+
+// ===== TTS Utilities with diagnostics =====
+const statusEl = document.getElementById('status');
+const voiceSelect = document.getElementById('voiceSelect');
+const crispToggle = document.getElementById('crispToggle');
+const delayInput = document.getElementById('delayInput');
+
+function logStatus(msg){ statusEl.textContent = msg; }
+
+let VOICES = [];
+function refreshVoices(){
+  VOICES = window.speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
+  VOICES.forEach((v,idx)=>{
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `${v.name} (${v.lang})` + (v.default ? " — default" : "");
+    voiceSelect.appendChild(opt);
+  });
+  const idx = VOICES.findIndex(v => /^en(-|_)/i.test(v.lang));
+  voiceSelect.value = (idx >= 0 ? idx : 0);
+  logStatus(VOICES.length ? `Voices: ${VOICES.length} loaded. Using: ${voiceSelect.selectedOptions[0]?.textContent}` : "No voices detected. Try clicking anywhere or enabling TTS in your OS.");
+}
+
+function getSelectedVoice(){
+  const i = parseInt(voiceSelect.value,10);
+  return Number.isInteger(i) ? VOICES[i] : null;
+}
+
+function ensureVoicesReady(){
+  return new Promise(resolve=>{
+    const ready = ()=> { refreshVoices(); resolve(); };
+    const t = setTimeout(ready, 700);
+    if ('onvoiceschanged' in speechSynthesis){
+      speechSynthesis.onvoiceschanged = ()=>{ clearTimeout(t); ready(); };
+    }
+    speechSynthesis.getVoices();
+  });
+}
+
+function speak(text, opts={}){
+  return new Promise((resolve, reject)=>{
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      const v = getSelectedVoice();
+      if (v) u.voice = v;
+      u.lang = v?.lang || "en-US";
+      u.rate = opts.rate ?? 0.95;
+      u.pitch = opts.pitch ?? 1.0;
+      u.volume = opts.volume ?? 1.0;
+      u.onend = resolve;
+      u.onerror = (e)=>{ logStatus("TTS error: " + (e.error || "unknown")); reject(e); };
+      window.speechSynthesis.speak(u);
+    }catch(e){ reject(e); }
+  });
+}
+
+// Safer, audible-by-default strategy with optional crisp start
+async function speakCrispAudible(text){
+  try { window.speechSynthesis.cancel(); } catch(e){}
+  const delay = Math.max(0, Math.min(300, parseInt(delayInput.value||"0",10)));
+  const useCrisp = crispToggle.checked;
+
+  if (useCrisp){
+    const silent = new SpeechSynthesisUtterance("a");
+    const v = getSelectedVoice();
+    if (v) silent.voice = v;
+    silent.lang = v?.lang || "en-US";
+    silent.volume = 0.0;
+    silent.rate = 2.2;
+    window.speechSynthesis.speak(silent);
+    await new Promise(r=> setTimeout(r, delay||60));
+  }
+  const padded = "\u200B " + text; // ZWSP + normal space
+  await speak(padded, { rate: 0.95, volume: 1.0 });
+}
+
+function speakAndFlip(card, text){
+  card.classList.toggle('flipped');
+  speakCrispAudible(text).catch(()=>{});
+}
+
+// Init
+(async function init(){
+  if (!('speechSynthesis' in window)){
+    logStatus("이 브라우저는 TTS를 지원하지 않습니다.");
+    return;
+  }
+  await ensureVoicesReady();
+  logStatus("✅ 준비됨. 카드나 'TTS 테스트'를 눌러 보세요.");
+})();
+
+// Test button
+document.getElementById('testBtn').addEventListener('click', async ()=>{
+  try{
+    await ensureVoicesReady();
+    await speakCrispAudible("Hello! This is a test of the speech engine.");
+    logStatus("✅ 테스트 재생 완료. " + (voiceSelect.selectedOptions[0]?.textContent || ""));
+  }catch(e){
+    logStatus("재생 실패: " + (e.message || e));
+  }
+});
+</script>
+</body>
+</html>
