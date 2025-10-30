@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Small Talk — To-Infinitive (Jina & Minho) • 단어칩 채우기</title>
+<style>
+  :root{--bg:#f6f9ff;--card:#ffffff;--ink:#0f172a;--ink-soft:#334155;--chip:#e8f0ff;--chip-ink:#0b3b8c;--chip-used:#dbeafe;--accent:#2563eb;--accent-ink:#ffffff;--wrong:#ef4444;--right:#10b981;}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:linear-gradient(180deg,#eef4ff,#f9fbff 35%,var(--bg));display:flex;align-items:flex-start;justify-content:center;}
+  .wrap{width:min(1100px,96vw);margin:20px auto;}
+  header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+  h1{font-size:clamp(20px,3.2vw,30px);margin:12px 0;}
+  .subtitle{color:var(--ink-soft);font-size:clamp(14px,2.4vw,16px);}
+  .board{background:var(--card);border-radius:18px;box-shadow:0 12px 30px rgba(15,23,42,.08);padding:18px;margin-top:12px;}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;}
+  button{border:0;border-radius:14px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px rgba(37,99,235,.25);}
+  button.secondary{background:#e2e8f0;color:#0f172a;box-shadow:none;}
+  button.ghost{background:transparent;color:var(--accent);box-shadow:none;border:2px solid var(--accent);}
+  button:disabled{opacity:.55;cursor:not-allowed;}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:900px){.grid{grid-template-columns:1.2fr .8fr;}}
+  .dialogue{background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:16px;padding:18px;}
+  .line{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:12px;}
+  .line+.line{margin-top:6px;}
+  .who{min-width:64px;font-weight:800;color:#334155;}
+  .say{line-height:1.6;font-size:clamp(17px,2.2vw,20px);}
+  .blank{display:inline-flex;min-width:120px;min-height:38px;padding:6px 10px;margin:0 4px;border-radius:12px;background:#f1f5f9;border:2px dashed #cbd5e1;color:#64748b;font-weight:700;align-items:center;justify-content:center;cursor:pointer;vertical-align:middle;}
+  .blank.selected{outline:3px solid var(--accent);background:#eef2ff;}
+  .blank.filled{border-style:solid;background:#e6f2ff;color:#0b3b8c;}
+  .blank.correct{background:rgba(16,185,129,.12);border-color:var(--right);color:#065f46;}
+  .blank.incorrect{background:rgba(239,68,68,.10);border-color:var(--wrong);color:#7f1d1d;}
+  .chips{background:linear-gradient(180deg,#fafcff,#f4f8ff);border-radius:16px;padding:16px;}
+  .bag{display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{user-select:none;font-weight:800;font-size:clamp(14px,2.1vw,18px);padding:10px 14px;border-radius:14px;background:var(--chip);color:var(--chip-ink);border:2px solid #c7ddff;cursor:pointer;transition:transform .08s ease;}
+  .chip:hover{transform:translateY(-2px);}
+  .chip.used{background:var(--chip-used);color:#6b7280;border-color:#d1d5db;opacity:.8;cursor:not-allowed;}
+  .legend{color:#475569;font-size:14px;margin-bottom:8px;}
+  .status{margin-top:12px;font-weight:700;color:#0f172a;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pill{padding:6px 10px;border-radius:999px;font-size:13px;background:#eef2ff;color:#1e40af;}
+  .pill.right{background:rgba(16,185,129,.15);color:#065f46;}
+  .pill.wrong{background:rgba(239,68,68,.18);color:#7f1d1d;}
+  .help{color:#475569;font-size:14px;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Small Talk — To-Infinitive (Jina & Minho)</h1>
+    <div class="subtitle">빈칸을 <strong>to부정사</strong> 단어칩으로 채우세요.</div>
+  </div>
+  <div class="controls">
+    <button id="checkBtn">정답 확인</button>
+    <button id="resetBtn" class="secondary">다시 풀기</button>
+    <button id="revealBtn" class="ghost">정답 보기</button>
+  </div>
+</header>
+<section class="board grid">
+  <div class="dialogue" id="dialogue">
+    <div class="line"><div class="who">Jina</div><div class="say">Minho, what is your dream?</div></div>
+    <div class="line"><div class="who">Minho</div><div class="say">My dream is <span class="blank" data-answer="to have"></span> a true friend.</div></div>
+    <div class="line"><div class="who">Jina</div><div class="say">I want a friend <span class="blank" data-answer="to play with"></span> after school.</div></div>
+    <div class="line"><div class="who">Minho</div><div class="say">Yes. Everyone needs someone <span class="blank" data-answer="to trust"></span>.</div></div>
+    <div class="line"><div class="who">Jina</div><div class="say">Yesterday, I visited Jiho <span class="blank" data-answer="to help"></span> him with homework.</div></div>
+    <div class="line"><div class="who">Minho</div><div class="say">That’s great! You are a good friend <span class="blank" data-answer="to help"></span> others.</div></div>
+    <div class="line"><div class="who">Jina</div><div class="say">The best way to keep a friend is <span class="blank" data-answer="to be kind"></span>.</div></div>
+    <div class="line"><div class="who">Minho</div><div class="say">Yes, I want <span class="blank" data-answer="to be"></span> a good friend too.</div></div>
+  </div>
+  <div class="chips">
+    <div class="legend">Word Chips — 모든 칩을 사용하지 않아도 됩니다.</div>
+    <div class="bag" id="bag">
+      <button class="chip" data-text="to have">to have</button>
+      <button class="chip" data-text="to play with">to play with</button>
+      <button class="chip" data-text="to trust">to trust</button>
+      <button class="chip" data-text="to help">to help</button>
+      <button class="chip" data-text="to help">to help</button>
+      <button class="chip" data-text="to be kind">to be kind</button>
+      <button class="chip" data-text="to be">to be</button>
+      <button class="chip" data-text="to learn">to learn</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="help">💡 팁: 칩 클릭 → 빈칸 채우기, 빈칸 클릭 → 비우기</div>
+  </div>
+</section>
+<div id="congrats" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:50;">
+  <div style="background:#fff;border-radius:20px;padding:28px 24px;width:min(520px,92vw);text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <div style="font-size:40px;line-height:1.1;">🎉 축하합니다! 🎉</div>
+    <p style="margin:12px 0 0;color:#334155;font-weight:700;">모든 정답을 맞혔어요.</p>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button id="againBtn" style="background:#2563eb;color:#fff;border:0;border-radius:14px;padding:12px 16px;font-weight:800;">다시 풀기</button>
+      <button id="closeCongrats" style="background:#e2e8f0;color:#0f172a;border:0;border-radius:14px;padding:12px 16px;font-weight:800;">닫기</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const blanks=[...document.querySelectorAll('.blank')];
+  const bag=document.getElementById('bag');
+  const status=document.getElementById('status');
+  const checkBtn=document.getElementById('checkBtn');
+  const resetBtn=document.getElementById('resetBtn');
+  const revealBtn=document.getElementById('revealBtn');
+  const modal=document.getElementById('congrats');
+  const againBtn=document.getElementById('againBtn');
+  const closeBtn=document.getElementById('closeCongrats');
+  let attempts=0;let selected=null;
+  function setSel(b){blanks.forEach(x=>x.classList.remove('selected'));selected=b;b?.classList.add('selected');}
+  function empty(b){if(b.dataset.filled){const val=b.dataset.filled;const same=[...bag.querySelectorAll('.chip')].filter(c=>c.dataset.text===val);const usedSame=same.find(c=>c.classList.contains('used'));if(usedSame)usedSame.classList.remove('used');}b.textContent='';delete b.dataset.filled;b.classList.remove('filled','selected','correct','incorrect');}
+  function shuffleChips(){const nodes=[...bag.children];for(let i=nodes.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[nodes[i],nodes[j]]=[nodes[j],nodes[i]];}nodes.forEach(n=>bag.appendChild(n));}
+  function clearFeedback(){blanks.forEach(b=>b.classList.remove('correct','incorrect'));status.innerHTML='';}
+  function checkAnswers(){let right=0,total=blanks.length,filled=0;blanks.forEach(b=>{const need=(b.dataset.answer||'').trim();const got=(b.dataset.filled||'').trim();b.classList.remove('correct','incorrect');if(got){filled++;if(got===need){right++;b.classList.add('correct');}else{b.classList.add('incorrect');}}});status.innerHTML=`<span class="pill">채운 칸: ${filled}/${total}</span>`+`<span class="pill right">정답: ${right}</span>`+`<span class="pill wrong">오답: ${Math.max(0,filled-right)}</span>`;attempts++;if(attempts>=2){revealBtn.disabled=false;}if(filled===total&&right===total){showCongrats();}}
+  function resetAll(){attempts=0;revealBtn.disabled=true;clearFeedback();setSel(null);blanks.forEach(empty);[...bag.querySelectorAll('.chip')].forEach(c=>c.classList.remove('used'));shuffleChips();hideCongrats();}
+  function revealAll(){blanks.forEach(b=>{const need=b.dataset.answer;if(b.dataset.filled&&b.dataset.filled!==need){const prev=[...bag.querySelectorAll('.chip')].find(c=>c.dataset.text===b.dataset.filled);if(prev)prev.classList.remove('used');}b.textContent=need;b.dataset.filled=need;b.classList.add('filled','correct');});[...bag.querySelectorAll('.chip')].forEach(c=>{const used=blanks.some(b=>b.dataset.filled===c.dataset.text);c.classList.toggle('used',used);});status.innerHTML=`<span class="pill right">정답이 채워졌습니다 ✔</span>`;showCongrats();}
+  function bindEvents(){blanks.forEach(b=>b.addEventListener('click',()=>{b.dataset.filled?empty(b):setSel(b);}));const chips=[...bag.querySelectorAll('.chip')];chips.forEach(c=>c.addEventListener('click',()=>{if(c.classList.contains('used'))return;const target=selected||blanks.find(b=>!b.dataset.filled);if(!target)return;target.textContent=c.dataset.text;target.dataset.filled=c.dataset.text;target.classList.add('filled');setSel(null);const same=[...bag.querySelectorAll('.chip')].filter(ch=>ch.dataset.text===c.dataset.text);if(same.length>1){const unused=same.find(s=>!s.classList.contains('used'));if(unused)unused.classList.add('used');}else{c.classList.add('used');}let allFilled=blanks.every(b=>b.dataset.filled);if(allFilled){checkAnswers();}}));checkBtn.addEventListener('click',checkAnswers);resetBtn.addEventListener('click',resetAll);revealBtn.addEventListener('click',revealAll);againBtn.addEventListener('click',()=>{resetAll();});closeBtn.addEventListener('click',hideCongrats);modal.addEventListener('click',e=>{if(e.target===modal)hideCongrats();});}
+  function showCongrats(){modal.style.display='flex';}
+  function hideCongrats(){modal.style.display='none';}
+  shuffleChips();bindEvents();
+})();
+</script>
+</body>
+</html>
