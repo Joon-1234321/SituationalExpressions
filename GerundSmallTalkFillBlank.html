@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fill in the Blanks – Small Talk at the Eiffel Tower</title>
+<style>
+  :root{
+    --bg1:#e8f2ff;
+    --card:#ffffffcc;
+    --accent:#0d47a1;      /* 칩 블루 */
+    --accent2:#007a5a;     /* 칩 그린 */
+    --menu:#5e35b1;        /* 메뉴 버튼 보라 (통일) */
+    --menu-hover:#4a2d8f;
+    --ok:#1b8f3d;
+    --err:#c62828;
+    --ink:#0b132b;
+  }
+  body{
+    margin:0; padding:24px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    color:var(--ink);
+    background: linear-gradient(180deg, #dfefff, #f8fbff);
+  }
+  h1{ margin:0 0 12px; font-size: clamp(22px, 2.6vw, 32px); color:#263238; }
+  .sub{ margin-bottom:18px; font-size: clamp(14px, 1.8vw, 18px); opacity:.9; }
+  .wrap{ display:grid; gap:22px; grid-template-columns: 1fr 380px; }
+  @media (max-width: 900px){ .wrap{ grid-template-columns: 1fr; } }
+  .card{
+    background: var(--card);
+    backdrop-filter: blur(6px);
+    border: 1px solid #d6e3ff;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px #0001;
+    padding: 18px 18px 8px;
+  }
+  .dialog .line{ font-size: clamp(16px, 2vw, 22px); line-height: 1.6; margin: 10px 0; }
+  .name{ font-weight:700; color:var(--accent2); }
+  input.blank{
+    min-width: 8ch; font-size: 1em; padding: 6px 10px; border-radius: 10px;
+    border: 2px solid #9fb7ff; outline: none; transition: .15s; background:#fff;
+  }
+  input.blank:focus{ border-color: var(--menu); box-shadow: 0 0 0 4px #5e35b11a; }
+  input.blank.ok{ border-color: var(--ok); background: #eaf7ef; }
+  input.blank.err{ border-color: var(--err); background: #fdeeee; }
+
+  /* 단어칩: 파랑/초록 계열 유지 */
+  .bank{ display:flex; flex-wrap:wrap; gap:10px; padding: 6px 2px 14px; }
+  .chip{
+    user-select:none; padding:10px 14px; border-radius: 999px; cursor:pointer;
+    transition:.15s transform, .15s opacity; font-weight:700; color:#fff;
+    border: 2px solid var(--accent); background: var(--accent);
+    font-size: clamp(14px, 1.8vw, 18px);
+  }
+  .chip.secondary{ border-color: var(--accent2); background: var(--accent2); }
+  .chip.used{ opacity:.35; pointer-events:none; transform:scale(.96); }
+
+  /* 메뉴 버튼: 보라 한 가지 색으로 통일 */
+  .controls{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+  .btn{
+    padding:10px 16px; border-radius:12px; border:none; cursor:pointer;
+    font-weight:800; color:#fff; letter-spacing:.2px;
+    background: var(--menu); box-shadow: 0 6px 14px #5e35b12a; transition:.15s;
+  }
+  .btn:hover, .btn:focus{ background: var(--menu-hover); outline: 3px solid #5e35b14a; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .score{ margin-top:12px; font-weight:700; }
+  .legend{ font-size: 13px; opacity:.8; margin-top:8px; }
+  .hint{
+    display:inline-block; font-size:12px; background:#fff8e1; border:1px solid #ffe0b2; color:#8d6e63;
+    padding:4px 8px; border-radius:10px; margin-left:8px;
+  }
+</style>
+</head>
+<body>
+  <h1>Fill in the Blanks – Small Talk at the Eiffel Tower</h1>
+  <div class="sub">빈칸을 <b>단어칩</b>으로 채우세요. 빈칸을 먼저 클릭한 뒤, 단어칩을 클릭하면 자동으로 들어갑니다.</div>
+
+  <div class="wrap">
+    <!-- 좌측: 대화 -->
+    <section class="card dialog" aria-label="대화문">
+      <div class="line"><span class="name">Jina:</span> Wow, seeing the Eiffel Tower in person is amazing!</div>
+
+      <div class="line"><span class="name">Minho:</span> Yeah, I’ve always wanted <input class="blank" data-answer="to visit" aria-label="blank 1" /> Paris since I was a kid.</div>
+
+      <div class="line"><span class="name">Jina:</span> Same here! I love <input class="blank" data-answer="taking" aria-label="blank 2" /> pictures of everything.</div>
+
+      <div class="line"><span class="name">Minho:</span> Me too. But <input class="blank" data-answer="waiting" aria-label="blank 3" /> in line was the hardest part!</div>
+
+      <div class="line"><span class="name">Jina:</span> Haha, true. Still, <input class="blank" data-answer="sharing" aria-label="blank 4" /> this moment feels special.</div>
+
+      <div class="line"><span class="name">Minho:</span> Absolutely. <input class="blank" data-answer="traveling" aria-label="blank 5" /> together is the best part of this trip.</div>
+
+      <div class="line"><span class="name">Jina:</span> And <input class="blank" data-answer="talking" aria-label="blank 6" /> like this feels so relaxing.</div>
+
+      <div class="line"><span class="name">Minho:</span> Yeah, it’s nice <input class="blank" data-answer="taking" aria-label="blank 7" /> it easy after our long flight yesterday.</div>
+
+      <div class="line"><span class="name">Jina:</span> Right. <input class="blank" data-answer="starting" aria-label="blank 8" /> fresh in Paris sounds perfect!</div>
+
+      <div class="legend">※ 정답 확인은 <b>Check Answers</b>를 누르세요. 오답이 누적 <b>3회</b>가 되면 <b>Show Answers</b>가 활성화됩니다.</div>
+      <div class="score" id="scoreBox">Score: 0 / 8</div>
+    </section>
+
+    <!-- 우측: 단어 은행 + 버튼 -->
+    <aside class="card" aria-label="단어 은행">
+      <h3 style="margin:6px 6px 10px">Word Bank</h3>
+      <div class="bank" id="bank"></div>
+      <div class="controls">
+        <button class="btn" id="checkBtn" aria-label="정답 확인">Check Answers</button>
+        <button class="btn" id="shuffleBtn" aria-label="단어 섞기">Shuffle</button>
+        <button class="btn" id="resetBtn" aria-label="초기화">Reset</button>
+        <button class="btn" id="showBtn" aria-label="정답 보기" disabled>Show Answers</button>
+      </div>
+      <div class="legend">빈칸을 클릭하면 <span class="hint">선택됨</span> 상태가 되어 단어칩이 들어갑니다.</div>
+    </aside>
+  </div>
+
+<script>
+  // --- 데이터: 단어 은행(중복 taking 포함) ---
+  const words = ["to visit","taking","waiting","sharing","traveling","talking","taking","starting"];
+
+  // --- 요소 참조 ---
+  const bank = document.getElementById('bank');
+  const blanks = [...document.querySelectorAll('input.blank')];
+  const checkBtn = document.getElementById('checkBtn');
+  const showBtn = document.getElementById('showBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const scoreBox = document.getElementById('scoreBox');
+
+  // --- 상태 ---
+  let focusedBlank = null;
+  let wrongChecks = 0;
+
+  // --- 단어칩 렌더링 ---
+  function renderBank(list){
+    bank.innerHTML = '';
+    list.forEach((w,i)=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (i%2 ? ' secondary' : '');
+      chip.textContent = w;
+      chip.dataset.word = w;
+      chip.dataset.id = 'chip-'+i; // 중복 단어 구분
+      chip.addEventListener('click', ()=>useChip(chip));
+      bank.appendChild(chip);
+    });
+  }
+
+  // --- 칩 사용: 포커스된(또는 다음 빈) 빈칸에 삽입 ---
+  function useChip(chip){
+    const target = focusedBlank ?? blanks.find(b => !b.value.trim());
+    if(!target) return; // 빈칸 없음
+    // 이전 칩 복원
+    if(target.dataset.chipId){
+      const prev = bank.querySelector(`[data-id="${target.dataset.chipId}"]`);
+      if(prev) prev.classList.remove('used');
+    }
+    target.value = chip.dataset.word;
+    target.dataset.chipId = chip.dataset.id;
+    chip.classList.add('used');
+    markNeutral(target);
+    // 다음 빈칸 포커스
+    const next = nextEmptyAfter(target);
+    setFocus(next ?? target);
+  }
+
+  function nextEmptyAfter(current){
+    const idx = blanks.indexOf(current);
+    for(let i=idx+1;i<blanks.length;i++){
+      if(!blanks[i].value.trim()) return blanks[i];
+    }
+    return null;
+  }
+
+  // --- 포커스 UX & 입력 처리 ---
+  blanks.forEach(b=>{
+    b.addEventListener('focus', ()=> setFocus(b));
+    b.addEventListener('click', ()=> setFocus(b));
+    b.addEventListener('input', ()=>{
+      if(b.dataset.chipId){
+        const prev = bank.querySelector(`[data-id="${b.dataset.chipId}"]`);
+        if(prev) prev.classList.remove('used');
+        delete b.dataset.chipId;
+      }
+      markNeutral(b);
+    });
+    // 더블클릭: 비우기
+    b.addEventListener('dblclick', ()=>{
+      if(b.dataset.chipId){
+        const prev = bank.querySelector(`[data-id="${b.dataset.chipId}"]`);
+        if(prev) prev.classList.remove('used');
+        delete b.dataset.chipId;
+      }
+      b.value = '';
+      markNeutral(b);
+      setFocus(b);
+    });
+  });
+
+  function setFocus(el){
+    if(!el) return;
+    focusedBlank = el;
+    el.focus();
+    el.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+
+  // --- 채점 ---
+  function normalize(s){ return s.trim().toLowerCase(); }
+
+  function checkAnswers(){
+    let correct = 0;
+    blanks.forEach(b=>{
+      const ans = b.dataset.answer;
+      const val = normalize(b.value || '');
+      if(val && val === normalize(ans)){
+        b.classList.add('ok'); b.classList.remove('err');
+        correct++;
+      }else{
+        b.classList.remove('ok');
+        if(val){ b.classList.add('err'); } else { markNeutral(b); }
+      }
+    });
+    scoreBox.textContent = `Score: ${correct} / ${blanks.length}`;
+    if(correct !== blanks.length){
+      wrongChecks++;
+      if(wrongChecks >= 3){
+        showBtn.disabled = false;
+      }
+    }
+  }
+
+  function markNeutral(b){ b.classList.remove('ok','err'); }
+
+  function showAnswers(){
+    blanks.forEach(b=>{
+      const ans = b.dataset.answer;
+      if(b.dataset.chipId){
+        const prev = bank.querySelector(`[data-id="${b.dataset.chipId}"]`);
+        if(prev) prev.classList.remove('used');
+        delete b.dataset.chipId;
+      }
+      b.value = ans;
+      b.classList.add('ok'); b.classList.remove('err');
+    });
+    scoreBox.textContent = `Score: ${blanks.length} / ${blanks.length}`;
+  }
+
+  function resetAll(){
+    blanks.forEach(b=>{
+      if(b.dataset.chipId){
+        const prev = bank.querySelector(`[data-id="${b.dataset.chipId}"]`);
+        if(prev) prev.classList.remove('used');
+        delete b.dataset.chipId;
+      }
+      b.value = '';
+      markNeutral(b);
+    });
+    wrongChecks = 0;
+    showBtn.disabled = true;
+    shuffle();
+    scoreBox.textContent = `Score: 0 / ${blanks.length}`;
+    setFocus(blanks[0]);
+  }
+
+  // --- 셔플(Fisher–Yates) ---
+  function shuffle(){
+    const arr = [...words];
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    renderBank(arr);
+  }
+
+  // 버튼 이벤트
+  document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+  document.getElementById('showBtn').addEventListener('click', showAnswers);
+  document.getElementById('resetBtn').addEventListener('click', resetAll);
+  document.getElementById('shuffleBtn').addEventListener('click', shuffle);
+
+  // 초기화
+  shuffle();
+  setFocus(blanks[0]);
+</script>
+</body>
+</html>

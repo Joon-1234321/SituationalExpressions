@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 매칭게임 - 색상 구분 버전</title>
+<style>
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #bbdefb, #e3f2fd);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+h1 {
+  color: #0d47a1;
+  text-shadow: 1px 1px #fff;
+}
+#game {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  max-width: 700px;
+  margin-top: 20px;
+}
+.card {
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  font-weight: bold;
+  font-size: 1.2em;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  user-select: none;
+  color: #fff;
+}
+.card:hover {
+  transform: scale(1.05);
+}
+.card.en {
+  background: #64b5f6; /* 하늘색 */
+}
+.card.kr {
+  background: #81c784; /* 연두색 */
+}
+.hidden {
+  visibility: hidden;
+}
+#status {
+  margin-top: 15px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #0d47a1;
+}
+#restart {
+  display: none;
+  margin-top: 20px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 1em;
+  cursor: pointer;
+}
+#restart:hover {
+  background: #0d47a1;
+}
+</style>
+</head>
+<body>
+<h1>🌤 단어 매칭게임</h1>
+<div id="status">⌛ 시간: <span id="time">0</span>초 | 🏆 최고기록: <span id="best">-</span></div>
+<div id="game"></div>
+<button id="restart">다시 풀기</button>
+
+<script>
+const pairs = [
+  ["in person","직접 만나서"],
+  ["since","~이래로, ~때문에"],
+  ["kid","아이, 어린이"],
+  ["same here","나도 그래"],
+  ["take pictures","사진을 찍다"],
+  ["wait in line","줄 서서 기다리다"],
+  ["share","나누다, 공유하다"],
+  ["special","특별한"],
+  ["absolutely","완전히, 정말로"],
+  ["trip","여행"],
+  ["relaxing","편안한, 휴식이 되는"],
+  ["take it easy","마음을 편히 먹다"],
+  ["flight","비행, 항공편"],
+  ["start fresh","새로 시작하다"],
+  ["perfect","완벽한"]
+];
+
+let cards = [];
+let firstCard = null;
+let matches = 0;
+let startTime, timer;
+let best = localStorage.getItem("bestMatchTimeColor") || "-";
+
+document.getElementById("best").textContent = best;
+
+function shuffle(array) {
+  for(let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function startGame(){
+  document.getElementById("restart").style.display = "none";
+  matches = 0;
+  firstCard = null;
+  document.getElementById("time").textContent = "0";
+  const container = document.getElementById("game");
+  container.innerHTML = "";
+  
+  cards = [];
+  pairs.forEach(([en, kr])=>{
+    cards.push({text: en, pair: kr, lang:"en"});
+    cards.push({text: kr, pair: en, lang:"kr"});
+  });
+  shuffle(cards);
+  
+  cards.forEach(data=>{
+    const card = document.createElement("div");
+    card.className = "card " + data.lang;
+    card.textContent = data.text;
+    card.dataset.lang = data.lang;
+    card.dataset.pair = data.pair;
+    card.addEventListener("click", ()=> selectCard(card));
+    container.appendChild(card);
+  });
+  
+  startTime = Date.now();
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    document.getElementById("time").textContent = Math.floor((Date.now()-startTime)/1000);
+  }, 1000);
+}
+
+function selectCard(card){
+  if(card.classList.contains("hidden")) return;
+  if(firstCard === null){
+    firstCard = card;
+    card.style.opacity = "0.7";
+  } else if(card !== firstCard){
+    if(card.dataset.pair === firstCard.textContent){
+      card.classList.add("hidden");
+      firstCard.classList.add("hidden");
+      matches++;
+      if(matches === pairs.length){
+        clearInterval(timer);
+        const totalTime = Math.floor((Date.now()-startTime)/1000);
+        const bestTime = localStorage.getItem("bestMatchTimeColor");
+        if(!bestTime || totalTime < bestTime){
+          localStorage.setItem("bestMatchTimeColor", totalTime);
+          document.getElementById("best").textContent = totalTime;
+        }
+        setTimeout(()=>{
+          alert("🎉 축하합니다! 모든 단어를 맞혔습니다!");
+          document.getElementById("restart").style.display = "inline-block";
+        }, 300);
+      }
+    } else {
+      const temp1 = firstCard, temp2 = card;
+      temp1.style.background = "#ffcdd2";
+      temp2.style.background = "#ffcdd2";
+      setTimeout(()=>{
+        temp1.style.background = temp1.dataset.lang === "en" ? "#64b5f6" : "#81c784";
+        temp2.style.background = temp2.dataset.lang === "en" ? "#64b5f6" : "#81c784";
+        temp1.style.opacity = "1";
+        temp2.style.opacity = "1";
+      }, 600);
+    }
+    firstCard = null;
+  }
+}
+
+document.getElementById("restart").addEventListener("click", startGame);
+startGame();
+</script>
+</body>
+</html>
