@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>현재분사 / 과거분사 선택 퀴즈</title>
+
+<style>
+  body{
+    background:#f4f6fa;
+    margin:0;
+    font-family: "Segoe UI", sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+  }
+  #app{
+    background:white;
+    max-width:600px;
+    width:90%;
+    padding:25px;
+    border-radius:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+  }
+  #progress{
+    text-align:right;
+    font-size:14px;
+    color:#6b7280;
+    margin-bottom:5px;
+  }
+  #base{
+    font-size:15px;
+    color:#374151;
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  h2{
+    margin-top:0;
+    font-size:20px;
+    color:#111827;
+    font-weight:700;
+    min-height:3em;
+  }
+  .choice-btn{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+    cursor:pointer;
+    font-weight:600;
+    background:#e5e9f2;
+    transition:0.2s;
+  }
+  .choice-btn:hover{
+    background:#d6ddea;
+  }
+  .correct{
+    background:#4ade80 !important;
+    color:#fff;
+  }
+  .wrong{
+    background:#f87171 !important;
+    color:#fff;
+  }
+  #explanation{
+    margin-top:15px;
+    background:#f1f5f9;
+    padding:15px;
+    border-radius:10px;
+    display:none;
+    font-size:15px;
+    line-height:1.5;
+  }
+  #nextBtn{
+    margin-top:15px;
+    width:100%;
+    padding:14px;
+    background:#3b82f6;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+    cursor:pointer;
+    display:none;
+    font-weight:600;
+  }
+  #nextBtn:hover{
+    background:#2563eb;
+  }
+  #finish{
+    display:none;
+    text-align:center;
+    font-size:22px;
+    font-weight:700;
+    color:#111827;
+    margin-top:10px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="progress"></div>
+  <div id="base"></div>
+  <h2 id="question"></h2>
+
+  <button class="choice-btn" id="btn1"></button>
+  <button class="choice-btn" id="btn2"></button>
+
+  <div id="explanation"></div>
+  <button id="nextBtn">Next</button>
+
+  <div id="finish">🎉 20문항을 모두 완료했습니다! 잘했어요! 🎉</div>
+</div>
+
+<script>
+const questions = [
+  {
+    sentence: "I was so ______ after cleaning my room.",
+    options: ["tiring","tired"],
+    answer: "tired",
+    base: "tire",
+    meaning: "피곤하게 하다, 지치게 하다",
+    exp: "사람의 감정 상태를 나타낼 때는 과거분사 tired 를 씁니다. ‘나는 너무 지쳤다’라는 뜻입니다."
+  },
+  {
+    sentence: "The movie was very ______.",
+    options: ["exciting","excited"],
+    answer: "exciting",
+    base: "excite",
+    meaning: "흥분시키다, 신나게 하다",
+    exp: "영화가 사람을 신나게 ‘만드는’ 성질 → 현재분사 exciting 이 맞습니다."
+  },
+  {
+    sentence: "He looked ______ by the question.",
+    options: ["confusing","confused"],
+    answer: "confused",
+    base: "confuse",
+    meaning: "혼란스럽게 하다",
+    exp: "그는 혼란스러워 보였다 → 사람의 감정이므로 confused(과거분사)를 사용합니다."
+  },
+  {
+    sentence: "The news was really ______.",
+    options: ["surprising","surprised"],
+    answer: "surprising",
+    base: "surprise",
+    meaning: "놀라게 하다",
+    exp: "뉴스가 ‘놀라운’ 소식 자체를 말하므로 surprising(현재분사) 이 알맞습니다."
+  },
+  {
+    sentence: "She felt ______ during the long class.",
+    options: ["boring","bored"],
+    answer: "bored",
+    base: "bore",
+    meaning: "지루하게 하다",
+    exp: "지루함을 느낀 주체는 사람(그녀)이므로 bored(과거분사)를 써야 합니다."
+  },
+  {
+    sentence: "The book is very ______.",
+    options: ["interesting","interested"],
+    answer: "interesting",
+    base: "interest",
+    meaning: "흥미를 끌다",
+    exp: "책이 사람에게 흥미를 ‘느끼게 한다’ → interesting(현재분사)가 맞습니다."
+  },
+  {
+    sentence: "I am ______ to visit Jeju Island.",
+    options: ["exciting","excited"],
+    answer: "excited",
+    base: "excite",
+    meaning: "흥분시키다, 신나게 하다",
+    exp: "신나 있는 주체는 나(I) → 감정을 가진 사람 → excited(과거분사)를 씁니다."
+  },
+  {
+    sentence: "This puzzle is really ______.",
+    options: ["challenging","challenged"],
+    answer: "challenging",
+    base: "challenge",
+    meaning: "도전하게 하다, 어렵게 하다",
+    exp: "퍼즐이 사람을 힘들게, 도전하게 ‘만든다’ → challenging(현재분사)가 자연스럽습니다."
+  },
+  {
+    sentence: "He looked ______ after soccer practice.",
+    options: ["tiring","tired"],
+    answer: "tired",
+    base: "tire",
+    meaning: "지치게 하다",
+    exp: "연습 후 지친 사람 → 감정/상태 표현이므로 tired(과거분사)를 씁니다."
+  },
+  {
+    sentence: "The story was very ______.",
+    options: ["moving","moved"],
+    answer: "moving",
+    base: "move",
+    meaning: "감동시키다, 움직이다",
+    exp: "이야기가 사람을 감동시키는 성질 → moving(현재분사)가 알맞습니다."
+  },
+  {
+    sentence: "She was ______ by the loud noise.",
+    options: ["frightening","frightened"],
+    answer: "frightened",
+    base: "frighten",
+    meaning: "겁주다, 놀라게 하다",
+    exp: "큰 소리에 놀란 사람은 그녀(she) → 감정 표현이므로 frightened(과거분사)를 사용합니다."
+  },
+  {
+    sentence: "The students were ______ by the easy test.",
+    options: ["surprising","surprised"],
+    answer: "surprised",
+    base: "surprise",
+    meaning: "놀라게 하다",
+    exp: "놀란 주체는 학생들(students) → 사람의 감정 → surprised(과거분사)가 맞습니다."
+  },
+  {
+    sentence: "We saw a ______ child in the park.",
+    options: ["crying","cried"],
+    answer: "crying",
+    base: "cry",
+    meaning: "울다",
+    exp: "현재 울고 있는 아이 → 동작이 진행 중이므로 crying(현재분사)를 씁니다."
+  },
+  {
+    sentence: "She found a ______ puppy near the station.",
+    options: ["lost","losing"],
+    answer: "lost",
+    base: "lose",
+    meaning: "잃다, 잃어버리다",
+    exp: "이미 잃어버린 상태의 강아지 → 상태를 나타내는 과거분사 lost 가 알맞습니다."
+  },
+  {
+    sentence: "The ______ leaves were already on the ground.",
+    options: ["falling","fallen"],
+    answer: "fallen",
+    base: "fall",
+    meaning: "떨어지다",
+    exp: "이미 땅에 떨어져 있는 상태 → 과거분사 fallen 이 맞습니다."
+  },
+  {
+    sentence: "The ______ students looked outside the window.",
+    options: ["bored","boring"],
+    answer: "bored",
+    base: "bore",
+    meaning: "지루하게 하다",
+    exp: "지루함을 느끼는 주체는 학생들 → 감정 표현이므로 bored(과거분사)를 씁니다."
+  },
+  {
+    sentence: "It was a very ______ speech.",
+    options: ["touched","touching"],
+    answer: "touching",
+    base: "touch",
+    meaning: "감동시키다, (손으로) 대다",
+    exp: "연설이 사람을 감동시키는 성질 → touching(현재분사)가 자연스럽습니다."
+  },
+  {
+    sentence: "He was deeply ______ by the gift.",
+    options: ["moved","moving"],
+    answer: "moved",
+    base: "move",
+    meaning: "감동시키다, 움직이다",
+    exp: "감동을 받은 사람은 그(he) → 감정을 나타내는 과거분사 moved 가 맞습니다."
+  },
+  {
+    sentence: "The ______ door kept the room quiet.",
+    options: ["closed","closing"],
+    answer: "closed",
+    base: "close",
+    meaning: "닫다",
+    exp: "이미 닫혀 있는 상태의 문 → 상태를 나타내는 과거분사 closed 를 씁니다."
+  },
+  {
+    sentence: "The ______ children were noisy in the classroom.",
+    options: ["excited","exciting"],
+    answer: "excited",
+    base: "excite",
+    meaning: "흥분시키다, 신나게 하다",
+    exp: "시끄럽게 떠드는 아이들 = 신이 난 아이들 → excited(과거분사)가 알맞습니다."
+  }
+];
+
+let index = 0;
+let answered = false;
+
+const progressEl = document.getElementById("progress");
+const baseEl = document.getElementById("base");
+const qEl = document.getElementById("question");
+const btn1 = document.getElementById("btn1");
+const btn2 = document.getElementById("btn2");
+const expEl = document.getElementById("explanation");
+const nextBtn = document.getElementById("nextBtn");
+const finishEl = document.getElementById("finish");
+
+function loadQuestion(){
+  const item = questions[index];
+  answered = false;
+
+  progressEl.textContent = `문항 ${index + 1} / ${questions.length}`;
+  baseEl.textContent = `기본형: ${item.base} – ${item.meaning}`;
+  qEl.textContent = item.sentence;
+
+  btn1.textContent = item.options[0];
+  btn2.textContent = item.options[1];
+
+  btn1.className = "choice-btn";
+  btn2.className = "choice-btn";
+
+  expEl.style.display = "none";
+  nextBtn.style.display = "none";
+}
+
+function checkAnswer(choiceText, clickedBtn){
+  if (answered) return; // 이미 한 번 답했으면 무시
+  answered = true;
+
+  const item = questions[index];
+  const correct = item.answer;
+
+  // 버튼 색상 표시
+  if(choiceText === correct){
+    clickedBtn.classList.add("correct");
+    // 다른 버튼은 그대로 두거나 정답도 표시할 수 있음
+    const otherBtn = (clickedBtn === btn1) ? btn2 : btn1;
+    // 다른 버튼은 기본색 유지
+  } else {
+    clickedBtn.classList.add("wrong");
+    if(btn1.textContent === correct) btn1.classList.add("correct");
+    if(btn2.textContent === correct) btn2.classList.add("correct");
+  }
+
+  // 결과 + 설명
+  const resultMsg = (choiceText === correct) ? "✅ 맞았습니다." : "❌ 틀렸습니다.";
+  expEl.style.display = "block";
+  expEl.innerHTML =
+    `<div style="margin-bottom:6px;">${resultMsg}</div>` +
+    `✔ 정답: <b>${correct}</b><br>` +
+    item.exp;
+
+  nextBtn.style.display = "block";
+}
+
+btn1.onclick = ()=>checkAnswer(btn1.textContent, btn1);
+btn2.onclick = ()=>checkAnswer(btn2.textContent, btn2);
+
+nextBtn.onclick = ()=>{
+  index++;
+  if(index >= questions.length){
+    qEl.style.display="none";
+    btn1.style.display="none";
+    btn2.style.display="none";
+    expEl.style.display="none";
+    nextBtn.style.display="none";
+    baseEl.style.display="none";
+    progressEl.style.display="none";
+    finishEl.style.display="block";
+  } else {
+    loadQuestion();
+  }
+};
+
+loadQuestion();
+</script>
+
+</body>
+</html>
