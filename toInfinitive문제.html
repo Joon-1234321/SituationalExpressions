@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>To부정사 문장 완성 활동지</title>
+<style>
+:root{
+  --bg1:#dbeafe; --bg2:#ccfbf1;
+  --card:#ffffffdd; --chip:#e2e8f0; --chip-hover:#cbd5e1;
+  --accent:#2563eb; --accent2:#0ea5e9;
+  --correct:#22c55e; --wrong:#ef4444;
+  --text:#0f172a;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:system-ui,Segoe UI,Roboto;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  padding:20px; display:flex; justify-content:center;
+}
+.wrap{max-width:900px; width:100%;}
+.card{
+  background:var(--card); padding:20px; border-radius:16px;
+  box-shadow:0 4px 10px #0002; backdrop-filter:blur(6px);
+}
+h2{margin-top:0;color:var(--accent);}
+.mean{font-size:1.3rem;margin-bottom:12px;color:var(--text);}
+.answer-box{
+  min-height:60px; background:#fff; border-radius:10px; padding:10px;
+  display:flex; flex-wrap:wrap; gap:8px; box-shadow:0 0 6px #0001;
+}
+.chips{display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;}
+.chip{
+  padding:8px 14px; background:var(--chip); border-radius:10px;
+  cursor:pointer; transition:.15s; font-size:1.1rem;
+}
+.chip:hover{background:var(--chip-hover);}
+.btns{margin-top:18px; display:flex; gap:10px;}
+.btn{
+  padding:10px 18px; border:none; border-radius:10px;
+  cursor:pointer; font-size:1rem; color:#fff;
+}
+.reset{background:var(--accent);}
+.undo{background:#475569;}
+.shuffle{background:#0ea5e9;}
+.check{background:#22c55e;}
+.progress{text-align:right;margin-bottom:6px;color:#1e293b;}
+
+.correct-glow{
+  animation:glow 1s forwards;
+}
+@keyframes glow{
+  0%{box-shadow:0 0 0px var(--correct);}
+  100%{box-shadow:0 0 25px var(--correct);}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="progress" id="progress"></div>
+    <h2>문장 완성하기</h2>
+    <div class="mean" id="mean"></div>
+    <div class="answer-box" id="answerBox"></div>
+    <div class="chips" id="chips"></div>
+
+    <div class="btns">
+      <button class="btn undo" onclick="undo()">되돌리기</button>
+      <button class="btn reset" onclick="clearAnswer()">지우기</button>
+      <button class="btn shuffle" onclick="shuffleChips()">다시섞기</button>
+      <button class="btn check" onclick="checkAnswer()">정답확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 원본 문장 세트 =====
+const DATA = [
+  ["나는 피자를 먹고 싶다.","I want to eat pizza."],
+  ["그녀는 책 읽기를 좋아한다.","She likes to read books."],
+  ["그는 동아리에 가입하기로 결정했다.","He decided to join the club."],
+  ["그들은 게임에서 이기기를 희망한다.","They hope to win the game."],
+  ["나는 제주도를 방문할 계획이다.","I plan to visit Jeju."],
+  ["우리는 영어를 공부할 필요가 있다.","We need to study English."],
+  ["나는 작년에 수영하는 법을 배웠다.","I learned to swim last year."],
+  ["그는 자전거를 고치려고 노력했다.","He tried to fix the bike."],
+  ["그녀는 나를 도와주기로 약속했다.","She promised to help me."],
+  ["나는 숙제를 가져오는 것을 잊었다.","I forgot to bring my homework."],
+  ["나는 읽을 책이 있다.","I have a book to read."],
+  ["그녀는 쓸 펜이 필요하다.","She needs a pen to write with."],
+  ["그는 할 숙제가 있다.","He has homework to do."],
+  ["나는 쉴 장소를 찾았다.","I found a place to rest."],
+  ["그녀는 먹을 것을 샀다.","She bought something to eat."],
+  ["나는 이야기할 친구가 필요하다.","I need a friend to talk to."],
+  ["그들은 공부할 방을 원한다.","They want a room to study in."],
+  ["그는 내일 볼 시험이 있다.","He has a test to take tomorrow."],
+  ["나는 쓸 주제가 필요하다.","I need a topic to write about."],
+  ["그녀는 끝낼 프로젝트가 있다.","She has a project to finish."],
+  ["나는 공부하러 도서관에 갔다.","I went to the library to study."],
+  ["그녀는 버스를 잡으려고 일찍 일어났다.","She got up early to catch the bus."],
+  ["그는 경주에서 이기려고 빨리 달렸다.","He ran fast to win the race."],
+  ["그들은 신선한 공기를 마시려고 창문을 열었다.","They opened the window to get fresh air."],
+  ["나는 수업을 기억하려고 필기를 했다.","I took notes to remember the lesson."],
+  ["그녀는 실력을 향상하려고 열심히 연습했다.","She practiced hard to improve her skills."],
+  ["나는 새 휴대폰을 사려고 돈을 모았다.","I saved money to buy a new phone."],
+  ["그는 질문하려고 나에게 전화했다.","He called me to ask a question."],
+  ["그녀는 좋은 성적을 받으려고 수학을 공부했다.","She studied math to get a good grade."],
+  ["나는 더 잘 읽으려고 불을 켰다.","I turned on the light to read better."]
+];
+
+let current = 0;
+let answerWords = [];
+let history = [];
+
+function loadQ(){
+  document.getElementById("progress").innerText =
+    `${current+1} / ${DATA.length}`;
+  document.getElementById("mean").innerText = DATA[current][0];
+
+  const sentence = DATA[current][1];
+  answerWords = sentence.split(" ");
+  const chips = shuffle([...answerWords]);
+
+  const chipBox = document.getElementById("chips");
+  chipBox.innerHTML = "";
+  const ansBox = document.getElementById("answerBox");
+  ansBox.innerHTML = "";
+  history = [];
+
+  chips.forEach(word=>{
+    const c=document.createElement("div");
+    c.className="chip";
+    c.innerText=word;
+    c.dataset.from="chips";
+    c.onclick=()=>moveChip(c);
+    chipBox.appendChild(c);
+  });
+}
+
+function moveChip(el){
+  const from=el.dataset.from;
+  history.push(el);
+
+  if(from==="chips"){
+    document.getElementById("answerBox").appendChild(el);
+    el.dataset.from="answer";
+  }else{
+    document.getElementById("chips").appendChild(el);
+    el.dataset.from="chips";
+  }
+}
+
+function undo(){
+  const el=history.pop();
+  if(!el) return;
+  moveChip(el);
+}
+
+function clearAnswer(){
+  const ansBox=document.getElementById("answerBox");
+  [...ansBox.children].forEach(c=>{
+    c.dataset.from="chips";
+    document.getElementById("chips").appendChild(c);
+  });
+}
+
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()* (i+1));
+    [array[i],array[j]]=[array[j],array[i]];
+  }
+  return array;
+}
+
+function shuffleChips(){
+  const chipBox=document.getElementById("chips");
+  const arr=[...chipBox.children];
+  shuffle(arr);
+  chipBox.innerHTML="";
+  arr.forEach(c=>chipBox.appendChild(c));
+}
+
+function checkAnswer(){
+  const ans=[...document.getElementById("answerBox").children].map(c=>c.innerText);
+  if(ans.join(" ")===answerWords.join(" ")){
+    document.getElementById("answerBox").classList.add("correct-glow");
+    setTimeout(()=>{
+      document.getElementById("answerBox").classList.remove("correct-glow");
+      nextQ();
+    },900);
+  } else {
+    alert("틀렸습니다!");
+  }
+}
+
+function nextQ(){
+  current++;
+  if(current>=DATA.length){
+    alert("모든 문장을 완료했습니다!");
+    current=0;
+  }
+  loadQ();
+}
+
+loadQ();
+</script>
+</body>
+</html>
