@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수동태 문장 단어 칩 배열 활동</title>
+<style>
+  :root{
+    --bg1:#1d4ed8;
+    --bg2:#0f172a;
+    --card:#ffffffdd;
+    --chip:#e2e8f0;
+    --chip-hover:#cbd5e1;
+    --accent:#2563eb;
+    --accent2:#0ea5e9;
+    --correct:#22c55e;
+    --wrong:#ef4444;
+    --text:#0f172a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:20px;
+    color:var(--text);
+    font-size:1.3rem;
+  }
+  .wrap{
+    max-width:960px;
+    width:66%;
+    background:var(--card);
+    border-radius:18px;
+    box-shadow:0 18px 45px rgba(15,23,42,.4);
+    padding:18px 16px 20px;
+    backdrop-filter:blur(12px);
+  }
+  @media (max-width:900px){
+    .wrap{width:100%;}
+  }
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .title{
+    font-weight:700;
+    font-size:1.2rem;
+  }
+  .progress{
+    font-size:1rem;
+    color:#475569;
+    font-weight:600;
+  }
+
+  .hint{
+    background:#e0f2fe;
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:12px;
+    font-size:1.05rem;
+    font-weight:600;
+  }
+
+  .sentence-box{
+    border-radius:14px;
+    border:1px dashed #cbd5e1;
+    background:#f8fafc;
+    min-height:80px;
+    padding:12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .sentence-placeholder{
+    font-size:1.05rem;
+    color:#94a3b8;
+    font-weight:500;
+  }
+
+  .chips-box{
+    border-radius:14px;
+    border:1px solid #e2e8f0;
+    background:#eef2ff;
+    min-height:90px;
+    padding:12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:flex-start;
+  }
+
+  .chip{
+    padding:7px 14px;
+    border-radius:999px;
+    background:var(--chip);
+    cursor:pointer;
+    font-size:1.05rem;
+    font-weight:700;
+    transition:.15s;
+    box-shadow:0 1px 4px rgba(15,23,42,.18);
+    user-select:none;
+  }
+  .chip:hover{
+    background:var(--chip-hover);
+    transform:translateY(-1px);
+  }
+
+  .controls{
+    margin-top:14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  button{
+    border:none;
+    border-radius:999px;
+    padding:8px 16px;
+    font-size:0.95rem;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-weight:600;
+  }
+  .btn-main{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:white;
+  }
+  .btn-sub{
+    background:#e2e8f0;
+    color:#0f172a;
+  }
+  .btn-next{
+    background:#22c55e;
+    color:white;
+  }
+  .btn-next:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+
+  .feedback{
+    margin-top:10px;
+    min-height:1.3em;
+    font-size:1.05rem;
+    font-weight:600;
+  }
+  .feedback.ok{color:var(--correct);}
+  .feedback.no{color:var(--wrong);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">수동태 문장을 단어 칩으로 완성해 보세요</div>
+    <div class="progress"><span id="currentNum">1</span> / <span id="totalNum">0</span> 문장</div>
+  </header>
+
+  <div class="hint" id="hintBox"></div>
+
+  <div class="sentence-box" id="answerBox">
+    <span class="sentence-placeholder" id="placeholder">아래 단어 칩을 클릭해서 문장을 만들어 보세요.</span>
+  </div>
+
+  <div class="chips-box" id="chipsBox"></div>
+
+  <div class="controls">
+    <button class="btn-main" id="checkBtn">정답 확인</button>
+    <button class="btn-sub" id="undoBtn">되돌리기</button>
+    <button class="btn-sub" id="clearBtn">지우기</button>
+    <button class="btn-sub" id="shuffleBtn">다시 섞기</button>
+    <!-- ✅ 처음에는 비활성화 -->
+    <button class="btn-next" id="nextBtn" disabled>다음 문장 ▶</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+const items = [
+  // be동사 현재 수동태 5개
+  { en:"The homework is done every day.",        ko:"숙제는 매일 끝난다." },
+  { en:"The classroom is cleaned in the morning.", ko:"교실은 아침에 청소된다." },
+  { en:"Many books are read in our class.",      ko:"우리 반에서는 많은 책이 읽힌다." },
+  { en:"The cookies are made by my mom.",        ko:"쿠키는 우리 엄마가 만든다." },
+  { en:"The door is opened at 8 a.m.",           ko:"문은 오전 8시에 열린다." },
+
+  // be동사 과거 수동태 10개
+  { en:"The window was broken yesterday.",       ko:"창문은 어제 깨졌다." },
+  { en:"The letters were sent last week.",       ko:"편지들은 지난주에 보내졌다." },
+  { en:"The game was played in the gym.",        ko:"그 경기는 체육관에서 열렸다." },
+  { en:"The picture was painted by Mina.",       ko:"그 그림은 미나가 그렸다." },
+  { en:"The bags were checked at the gate.",     ko:"가방들은 정문에서 검사받았다." },
+  { en:"The test was finished early.",           ko:"시험은 일찍 끝났다." },
+  { en:"The songs were sung at the festival.",   ko:"그 노래들은 축제에서 불렸다." },
+  { en:"The movie was watched at home.",         ko:"그 영화는 집에서 보았다." },
+  { en:"The room was used by the science club.", ko:"그 방은 과학 동아리가 사용했다." },
+  { en:"The puppies were found near the park.",  ko:"강아지들은 공원 근처에서 발견되었다." },
+
+  // 조동사 + 수동태 10개
+  { en:"The problem can be solved easily.",      ko:"그 문제는 쉽게 해결될 수 있다." },
+  { en:"The cakes can be eaten after lunch.",    ko:"케이크는 점심 식사 후에 먹을 수 있다." },
+  { en:"The rule must be followed by everyone.", ko:"그 규칙은 모두가 지켜야 한다." },
+  { en:"The door must be closed now.",           ko:"문은 지금 닫혀야 한다." },
+  { en:"The work will be finished soon.",        ko:"그 일은 곧 끝날 것이다." },
+  { en:"The bags will be checked again.",        ko:"가방들은 다시 검사될 것이다." },
+  { en:"The project should be done this week.",  ko:"그 프로젝트는 이번 주에 끝내야 한다." },
+  { en:"The story should be read carefully.",    ko:"그 이야기는 주의 깊게 읽어야 한다." },
+  { en:"The shirts may be washed tomorrow.",     ko:"그 셔츠들은 내일 세탁될지도 모른다." },
+  { en:"The lights may be turned off at 10.",    ko:"불은 10시에 꺼질지도 모른다." }
+];
+
+const hintBox    = document.getElementById("hintBox");
+const answerBox  = document.getElementById("answerBox");
+const chipsBox   = document.getElementById("chipsBox");
+const placeholder= document.getElementById("placeholder");
+const feedback   = document.getElementById("feedback");
+const currentNum = document.getElementById("currentNum");
+const totalNum   = document.getElementById("totalNum");
+
+const checkBtn   = document.getElementById("checkBtn");
+const undoBtn    = document.getElementById("undoBtn");
+const clearBtn   = document.getElementById("clearBtn");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const nextBtn    = document.getElementById("nextBtn");
+
+let idx = 0;
+let historyStack = [];
+
+totalNum.textContent = items.length;
+
+function shuffle(arr){
+  return arr.map(v=>[Math.random(),v])
+            .sort((a,b)=>a[0]-b[0])
+            .map(v=>v[1]);
+}
+
+function clearAnswer(){
+  const chips = [...answerBox.querySelectorAll(".chip")];
+  chips.forEach(c=>{
+    c.remove();
+    chipsBox.appendChild(c);
+    c.dataset.location="pool";
+  });
+  placeholder.style.display="";
+}
+
+function buildSentence(i){
+  const item = items[i];
+  idx = i;
+  currentNum.textContent = i+1;
+  feedback.textContent="";
+  feedback.className="feedback";
+  historyStack=[];
+
+  // 새 문장 시작할 때는 항상 다음 버튼 비활성화
+  nextBtn.disabled = true;
+
+  hintBox.textContent = item.ko;
+
+  const clean = item.en.replace(/[.?!]$/,"");
+  const words = clean.split(" ");
+
+  chipsBox.innerHTML="";
+  answerBox.innerHTML="";
+  answerBox.appendChild(placeholder);
+  placeholder.style.display="";
+
+  const shuffled = shuffle(words.slice());
+  shuffled.forEach(w=>{
+    const chip=document.createElement("div");
+    chip.className="chip";
+    chip.textContent=w;
+    chip.dataset.word=w;
+    chip.dataset.location="pool";
+    chip.addEventListener("click", onChipClick);
+    chipsBox.appendChild(chip);
+  });
+}
+
+function onChipClick(e){
+  const chip=e.currentTarget;
+  const from=chip.dataset.location;
+
+  saveHistory();
+
+  if(from==="pool"){
+    placeholder.style.display="none";
+    answerBox.appendChild(chip);
+    chip.dataset.location="answer";
+  }else{
+    chipsBox.appendChild(chip);
+    chip.dataset.location="pool";
+    if(answerBox.querySelectorAll(".chip").length===0){
+      placeholder.style.display="";
+    }
+  }
+}
+
+function saveHistory(){
+  const pool=[...chipsBox.querySelectorAll(".chip")].map(c=>c.dataset.word);
+  const ans=[...answerBox.querySelectorAll(".chip")].map(c=>c.dataset.word);
+  historyStack.push({pool:pool, answer:ans});
+  if(historyStack.length>50) historyStack.shift();
+}
+
+function restoreHistory(){
+  if(historyStack.length===0)return;
+  const last=historyStack.pop();
+
+  const all=[...chipsBox.querySelectorAll(".chip"), ...answerBox.querySelectorAll(".chip")];
+  all.forEach(c=>c.remove());
+
+  const byWord={};
+  all.forEach(c=>byWord[c.dataset.word]=c);
+
+  chipsBox.innerHTML="";
+  answerBox.innerHTML="";
+  answerBox.appendChild(placeholder);
+
+  last.pool.forEach(w=>{
+    const c=byWord[w];
+    chipsBox.appendChild(c);
+    c.dataset.location="pool";
+  });
+  last.answer.forEach(w=>{
+    const c=byWord[w];
+    answerBox.appendChild(c);
+    c.dataset.location="answer";
+  });
+
+  placeholder.style.display=last.answer.length?"none":"";
+}
+
+function checkAnswer(){
+  const item=items[idx];
+  const clean=item.en.replace(/[.?!]$/,"");
+  const target=clean.split(" ");
+  const answer=[...answerBox.querySelectorAll(".chip")].map(c=>c.dataset.word);
+
+  if(answer.length===0){
+    feedback.textContent="먼저 단어 칩을 클릭해 문장을 만들어 보세요.";
+    feedback.className="feedback no";
+    nextBtn.disabled = true;
+    return;
+  }
+
+  const ok = target.length===answer.length && target.every((w,i)=>w===answer[i]);
+
+  if(ok){
+    feedback.textContent="정답입니다! 🎉";
+    feedback.className="feedback ok";
+    nextBtn.disabled = false;      // ✅ 정답일 때만 다음 버튼 활성화
+  }else{
+    feedback.textContent="아쉽네요. 단어 순서를 다시 확인해 보세요.";
+    feedback.className="feedback no";
+    nextBtn.disabled = true;       // ❌ 오답이면 비활성화 유지
+  }
+}
+
+checkBtn.addEventListener("click", checkAnswer);
+undoBtn.addEventListener("click", restoreHistory);
+clearBtn.addEventListener("click", ()=>{
+  historyStack=[];
+  clearAnswer();
+  feedback.textContent="";
+  feedback.className="feedback";
+  nextBtn.disabled = true; // 지우면 다시 잠금
+});
+shuffleBtn.addEventListener("click", ()=>{
+  buildSentence(idx);      // 다시 섞으면 새 문제처럼
+});
+
+// ✅ 정답 맞혀야만 실제로 넘어가게
+nextBtn.addEventListener("click", ()=>{
+  if(nextBtn.disabled) return;  // 잠겨 있으면 무시
+  const next=(idx+1)%items.length;
+  buildSentence(next);
+});
+
+buildSentence(0);
+</script>
+</body>
+</html>
