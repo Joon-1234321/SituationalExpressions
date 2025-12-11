@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수동태 동사 형태 맞추기 (빈칸 채우기)</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#0f1b36cc;
+    --text:#e5e7eb;
+    --accent:#38bdf8;
+    --accent2:#22c55e;
+    --wrong:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+    background:radial-gradient(1200px 700px at 50% -10%, #1b2a55 0%, var(--bg) 60%);
+    color:var(--text);
+    font-size:1.3rem; /* ★ 글자 기본 크게 */
+  }
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:22px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    font-size:1.1rem;
+  }
+  .title{
+    font-size:1.6rem;
+    font-weight:700;
+  }
+
+  main{
+    background:var(--panel);
+    border-radius:20px;
+    padding:26px 22px;
+    box-shadow:0 18px 40px #0007;
+  }
+
+  .ko{
+    background:#0f172a;
+    border-radius:12px;
+    padding:12px 16px;
+    margin-bottom:18px;
+    font-size:1.35rem; /* ★ 크게 */
+    font-weight:600;
+  }
+
+  .en-sentence{
+    font-size:1.6rem; /* ★ 크게 */
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .hint-verb{
+    font-size:1.2rem; /* ★ 크게 */
+    opacity:0.9;
+    margin-bottom:18px;
+  }
+
+  #answerInput{
+    width:100%;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1px solid #475569;
+    background:#020617;
+    color:var(--text);
+    font-size:1.4rem; /* ★ 입력칸 글자 크게 */
+  }
+
+  .buttons{
+    margin-top:14px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  button{
+    border:none;
+    border-radius:999px;
+    padding:10px 20px;
+    font-size:1.1rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #checkBtn{
+    background:linear-gradient(135deg,var(--accent),#4f46e5);
+    color:white;
+  }
+  #nextBtn{
+    background:linear-gradient(135deg,var(--accent2),#16a34a);
+    color:white;
+  }
+  #nextBtn:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+  #showAnswerBtn{
+    background:#1e293b;
+    color:#e5e7eb;
+  }
+
+  .feedback{
+    margin-top:10px;
+    min-height:1.6em;
+    font-size:1.35rem; /* ★ 피드백 크게 */
+    font-weight:700;
+  }
+  .feedback.ok{color:var(--accent2);}
+  .feedback.no{color:var(--wrong);}
+
+  .done{
+    text-align:center;
+    padding:30px 10px;
+    font-size:1.4rem;
+  }
+  .done-title{
+    font-size:2rem;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">수동태 동사 형태 맞추기</div>
+    <div><span id="currentNum">1</span> / <span id="totalNum">0</span> 문제</div>
+  </header>
+
+  <main>
+    <div id="quizArea">
+      <div class="ko" id="koText"></div>
+      <div class="en-sentence" id="enText"></div>
+      <div class="hint-verb" id="verbHint"></div>
+
+      <input id="answerInput" placeholder="여기에 알맞은 수동태 동사 형태를 쓰세요. (예: is done)">
+      <div class="buttons">
+        <button id="checkBtn">정답 확인</button>
+        <button id="showAnswerBtn">정답 보기</button>
+        <button id="nextBtn" disabled>다음 문제 ▶</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div id="doneArea" style="display:none;">
+      <div class="done">
+        <div class="done-title">수고했어요! 🎉</div>
+        모든 문제를 완료했습니다.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const questions = [
+  { ko:"숙제는 매일 끝난다.", enBase:"The homework ___ every day.", hint:"(do)", answer:"is done" },
+  { ko:"교실은 아침에 청소된다.", enBase:"The classroom ___ in the morning.", hint:"(clean)", answer:"is cleaned" },
+  { ko:"우리 반에서는 많은 책이 읽힌다.", enBase:"Many books ___ in our class.", hint:"(read)", answer:"are read" },
+  { ko:"쿠키는 우리 엄마가 만든다.", enBase:"The cookies ___ by my mom.", hint:"(make)", answer:"are made" },
+  { ko:"문은 오전 8시에 열린다.", enBase:"The door ___ at 8 a.m.", hint:"(open)", answer:"is opened" },
+
+  { ko:"창문은 어제 깨졌다.", enBase:"The window ___ yesterday.", hint:"(break)", answer:"was broken" },
+  { ko:"편지들은 지난주에 보내졌다.", enBase:"The letters ___ last week.", hint:"(send)", answer:"were sent" },
+  { ko:"그 경기는 체육관에서 열렸다.", enBase:"The game ___ in the gym.", hint:"(play)", answer:"was played" },
+  { ko:"그 그림은 미나가 그렸다.", enBase:"The picture ___ by Mina.", hint:"(paint)", answer:"was painted" },
+  { ko:"가방들은 검사받았다.", enBase:"The bags ___ at the gate.", hint:"(check)", answer:"were checked" },
+  { ko:"시험은 일찍 끝났다.", enBase:"The test ___ early.", hint:"(finish)", answer:"was finished" },
+  { ko:"노래들은 불렸다.", enBase:"The songs ___ at the festival.", hint:"(sing)", answer:"were sung" },
+  { ko:"영화는 집에서 보았다.", enBase:"The movie ___ at home.", hint:"(watch)", answer:"was watched" },
+  { ko:"방은 과학 동아리가 사용했다.", enBase:"The room ___ by the science club.", hint:"(use)", answer:"was used" },
+  { ko:"강아지들은 발견되었다.", enBase:"The puppies ___ near the park.", hint:"(find)", answer:"were found" },
+
+  { ko:"문제는 해결될 수 있다.", enBase:"The problem ___ easily.", hint:"(can, solve)", answer:"can be solved" },
+  { ko:"케이크는 먹을 수 있다.", enBase:"The cakes ___ after lunch.", hint:"(can, eat)", answer:"can be eaten" },
+  { ko:"규칙은 지켜야 한다.", enBase:"The rule ___ by everyone.", hint:"(must, follow)", answer:"must be followed" },
+  { ko:"문은 닫혀야 한다.", enBase:"The door ___ now.", hint:"(must, close)", answer:"must be closed" },
+  { ko:"일은 곧 끝날 것이다.", enBase:"The work ___ soon.", hint:"(will, finish)", answer:"will be finished" },
+  { ko:"가방들은 검사될 것이다.", enBase:"The bags ___ again.", hint:"(will, check)", answer:"will be checked" },
+  { ko:"프로젝트는 끝내야 한다.", enBase:"The project ___ this week.", hint:"(should, do)", answer:"should be done" },
+  { ko:"이야기는 읽어야 한다.", enBase:"The story ___ carefully.", hint:"(should, read)", answer:"should be read" },
+  { ko:"셔츠들은 세탁될지도 모른다.", enBase:"The shirts ___ tomorrow.", hint:"(may, wash)", answer:"may be washed" },
+  { ko:"불은 꺼질지도 모른다.", enBase:"The lights ___ at 10.", hint:"(may, turn off)", answer:"may be turned off" }
+];
+
+const koText=document.getElementById("koText");
+const enText=document.getElementById("enText");
+const verbHint=document.getElementById("verbHint");
+const answerInput=document.getElementById("answerInput");
+const checkBtn=document.getElementById("checkBtn");
+const showAnswerBtn=document.getElementById("showAnswerBtn");
+const nextBtn=document.getElementById("nextBtn");
+const feedback=document.getElementById("feedback");
+const currentNum=document.getElementById("currentNum");
+const totalNum=document.getElementById("totalNum");
+const quizArea=document.getElementById("quizArea");
+const doneArea=document.getElementById("doneArea");
+
+let idx=0;
+let isCorrect=false;
+
+totalNum.textContent=questions.length;
+
+function normalize(t){
+  return t.trim().replace(/\s+/g," ").toLowerCase();
+}
+
+function loadQuestion(n){
+  const q=questions[n];
+  idx=n;
+  isCorrect=false;
+
+  currentNum.textContent=n+1;
+  koText.textContent=q.ko;
+  enText.textContent=q.enBase;
+  verbHint.textContent=q.hint;
+
+  answerInput.value="";
+  answerInput.focus();
+  feedback.textContent="";
+  feedback.className="feedback";
+  nextBtn.disabled=true;
+}
+
+function checkAnswer(){
+  const q=questions[idx];
+  const user=normalize(answerInput.value);
+  const correct=normalize(q.answer);
+
+  if(!user){
+    feedback.textContent="먼저 답을 입력해 보세요!";
+    feedback.className="feedback no";
+    return;
+  }
+
+  if(user===correct){
+    feedback.textContent="정답입니다! 🎉";
+    feedback.className="feedback ok";
+    nextBtn.disabled=false;
+    isCorrect=true;
+  }else{
+    feedback.textContent="아쉽네요. 다시 한번!";
+    feedback.className="feedback no";
+    nextBtn.disabled=true;
+    isCorrect=false;
+  }
+}
+
+checkBtn.onclick=checkAnswer;
+
+// ★ Enter 키로 정답 또는 다음 문제 진행
+answerInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    if(!isCorrect){
+      checkAnswer();
+    } else {
+      goNext();
+    }
+  }
+});
+
+// 정답 보기
+showAnswerBtn.onclick=()=>{
+  const q=questions[idx];
+  feedback.textContent=`정답: ${q.answer}`;
+  feedback.className="feedback ok";
+  answerInput.value=q.answer;
+  nextBtn.disabled=false;
+  isCorrect=true;
+};
+
+// ★ 다음 문제로 이동 기능
+function goNext(){
+  if(!isCorrect) return;
+
+  const next=idx+1;
+  if(next<questions.length){
+    loadQuestion(next);
+  } else {
+    quizArea.style.display="none";
+    doneArea.style.display="block";
+  }
+}
+
+nextBtn.onclick=goNext;
+
+// 첫 문제 불러오기
+loadQuestion(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수동태 → 능동태로 바꾸기</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#0f1b36cc;
+    --text:#e5e7eb;
+    --accent:#38bdf8;
+    --accent2:#22c55e;
+    --wrong:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+    background:radial-gradient(1200px 700px at 50% -10%, #1b2a55 0%, var(--bg) 60%);
+    color:var(--text);
+    font-size:1.3rem;
+  }
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:22px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    font-size:1.1rem;
+  }
+  .title{
+    font-size:1.6rem;
+    font-weight:700;
+  }
+
+  main{
+    background:var(--panel);
+    border-radius:20px;
+    padding:26px 22px;
+    box-shadow:0 18px 40px #0007;
+  }
+
+  .ko{
+    background:#0f172a;
+    border-radius:12px;
+    padding:12px 16px;
+    margin-bottom:14px;
+    font-size:1.3rem;
+    font-weight:600;
+  }
+
+  .passive{
+    font-size:1.5rem;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+
+  .instruction{
+    font-size:1.1rem;
+    opacity:0.9;
+    margin-bottom:18px;
+  }
+
+  #answerInput{
+    width:100%;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1px solid #475569;
+    background:#020617;
+    color:var(--text);
+    font-size:1.35rem;
+  }
+  #answerInput:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px rgba(56,189,248,0.7);
+  }
+
+  .buttons{
+    margin-top:14px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  button{
+    border:none;
+    border-radius:999px;
+    padding:10px 20px;
+    font-size:1.05rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #checkBtn{
+    background:linear-gradient(135deg,var(--accent),#4f46e5);
+    color:white;
+  }
+  #showAnswerBtn{
+    background:#1e293b;
+    color:#e5e7eb;
+  }
+  #nextBtn{
+    background:linear-gradient(135deg,var(--accent2),#16a34a);
+    color:white;
+  }
+  #nextBtn:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+
+  .feedback{
+    margin-top:10px;
+    min-height:1.6em;
+    font-size:1.3rem;
+    font-weight:700;
+  }
+  .feedback.ok{color:var(--accent2);}
+  .feedback.no{color:var(--wrong);}
+
+  .done{
+    text-align:center;
+    padding:30px 10px;
+    font-size:1.4rem;
+  }
+  .done-title{
+    font-size:2rem;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">수동태 문장을 능동태로 바꿔 보세요</div>
+    <div><span id="currentNum">1</span> / <span id="totalNum">0</span> 문제</div>
+  </header>
+
+  <main>
+    <div id="quizArea">
+      <div class="ko" id="koText"></div>
+      <div class="passive" id="passiveText"></div>
+      <div class="instruction">
+        위 수동태 문장을 <strong>능동태(Active Voice)</strong>로 바꿔 한 문장으로 써 보세요.
+      </div>
+
+      <input id="answerInput" placeholder="예: The students do the homework every day.">
+      <div class="buttons">
+        <button id="checkBtn">정답 확인</button>
+        <button id="showAnswerBtn">정답 보기</button>
+        <button id="nextBtn" disabled>다음 문제 ▶</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div id="doneArea" style="display:none;">
+      <div class="done">
+        <div class="done-title">수고했어요! 🎉</div>
+        모든 수동태 문장을 능동태로 바꿔 보았습니다.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const questions = [
+  // 현재 수동태 (주어 명시)
+  {
+    ko:"학생들은 숙제를 매일 한다.",
+    passive:"The homework is done every day by the students.",
+    active:"The students do the homework every day."
+  },
+  {
+    ko:"선생님은 아침에 교실을 청소한다.",
+    passive:"The classroom is cleaned in the morning by the teacher.",
+    active:"The teacher cleans the classroom in the morning."
+  },
+  {
+    ko:"우리 반 학생들은 많은 책을 읽는다.",
+    passive:"Many books are read in our class by the students.",
+    active:"The students read many books in our class."
+  },
+  {
+    ko:"우리 엄마는 쿠키를 만든다.",
+    passive:"The cookies are made by my mom.",
+    active:"My mom makes the cookies."
+  },
+  {
+    ko:"매니저는 문을 오전 8시에 연다.",
+    passive:"The door is opened at 8 a.m. by the manager.",
+    active:"The manager opens the door at 8 a.m."
+  },
+
+  // 과거 수동태 (주어 명시)
+  {
+    ko:"톰은 어제 창문을 깨뜨렸다.",
+    passive:"The window was broken yesterday by Tom.",
+    active:"Tom broke the window yesterday."
+  },
+  {
+    ko:"사무실 직원들은 지난주에 편지들을 보냈다.",
+    passive:"The letters were sent last week by the office staff.",
+    active:"The office staff sent the letters last week."
+  },
+  {
+    ko:"우리 팀은 체육관에서 그 경기를 했다.",
+    passive:"The game was played in the gym by our team.",
+    active:"Our team played the game in the gym."
+  },
+  {
+    ko:"미나는 그 그림을 그렸다.",
+    passive:"The picture was painted by Mina.",
+    active:"Mina painted the picture."
+  },
+  {
+    ko:"직원들은 정문에서 가방들을 검사했다.",
+    passive:"The bags were checked at the gate by the staff.",
+    active:"The staff checked the bags at the gate."
+  },
+  {
+    ko:"학생들은 시험을 일찍 끝냈다.",
+    passive:"The test was finished early by the students.",
+    active:"The students finished the test early."
+  },
+  {
+    ko:"학생들은 축제에서 그 노래들을 불렀다.",
+    passive:"The songs were sung at the festival by the students.",
+    active:"The students sang the songs at the festival."
+  },
+  {
+    ko:"우리 가족은 집에서 그 영화를 보았다.",
+    passive:"The movie was watched at home by my family.",
+    active:"My family watched the movie at home."
+  },
+  {
+    ko:"과학 동아리는 그 방을 사용했다.",
+    passive:"The room was used by the science club.",
+    active:"The science club used the room."
+  },
+  {
+    ko:"아이들은 공원 근처에서 강아지들을 발견했다.",
+    passive:"The puppies were found near the park by the children.",
+    active:"The children found the puppies near the park."
+  },
+
+  // 조동사 + 수동태 (주어 명시)
+  {
+    ko:"우리 팀은 그 문제를 쉽게 해결할 수 있다.",
+    passive:"The problem can be solved easily by our team.",
+    active:"Our team can solve the problem easily."
+  },
+  {
+    ko:"학생들은 점심 식사 후에 케이크를 먹을 수 있다.",
+    passive:"The cakes can be eaten after lunch by the students.",
+    active:"The students can eat the cakes after lunch."
+  },
+  {
+    ko:"모든 사람은 그 규칙을 지켜야 한다.",
+    passive:"The rule must be followed by everyone.",
+    active:"Everyone must follow the rule."
+  },
+  {
+    ko:"누군가는 지금 문을 닫아야 한다.",
+    passive:"The door must be closed now by someone.",
+    active:"Someone must close the door now."
+  },
+  {
+    ko:"그 일은 일꾼들에 의해 곧 끝날 것이다.",
+    passive:"The work will be finished soon by the workers.",
+    active:"The workers will finish the work soon."
+  },
+  {
+    ko:"경비원들은 가방들을 다시 검사할 것이다.",
+    passive:"The bags will be checked again by the guards.",
+    active:"The guards will check the bags again."
+  },
+  {
+    ko:"우리는 그 프로젝트를 이번 주에 끝내야 한다.",
+    passive:"The project should be done this week by us.",
+    active:"We should do the project this week."
+  },
+  {
+    ko:"너는 그 이야기를 주의 깊게 읽어야 한다.",
+    passive:"The story should be read carefully by you.",
+    active:"You should read the story carefully."
+  },
+  {
+    ko:"엄마는 내일 그 셔츠들을 세탁할지도 모른다.",
+    passive:"The shirts may be washed tomorrow by Mom.",
+    active:"Mom may wash the shirts tomorrow."
+  },
+  {
+    ko:"그들은 10시에 불을 끌지도 모른다.",
+    passive:"The lights may be turned off at 10 by them.",
+    active:"They may turn off the lights at 10."
+  }
+];
+
+const koText = document.getElementById("koText");
+const passiveText = document.getElementById("passiveText");
+const answerInput = document.getElementById("answerInput");
+const checkBtn = document.getElementById("checkBtn");
+const showAnswerBtn = document.getElementById("showAnswerBtn");
+const nextBtn = document.getElementById("nextBtn");
+const feedback = document.getElementById("feedback");
+const currentNum = document.getElementById("currentNum");
+const totalNum = document.getElementById("totalNum");
+const quizArea = document.getElementById("quizArea");
+const doneArea = document.getElementById("doneArea");
+
+let idx = 0;
+let isCorrect = false;
+let answerTimeoutId = null;
+
+totalNum.textContent = questions.length;
+
+function normalize(text){
+  return text
+    .trim()
+    .replace(/[.?!]$/,"")   // 끝의 마침표, ? ! 제거
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+
+function loadQuestion(n){
+  const q = questions[n];
+  idx = n;
+  isCorrect = false;
+
+  currentNum.textContent = n+1;
+  koText.textContent = q.ko;
+  passiveText.textContent = q.passive;
+  answerInput.value = "";
+  answerInput.focus();
+  feedback.textContent = "";
+  feedback.className = "feedback";
+  nextBtn.disabled = true;
+
+  // 정답 보기 타이머 초기화
+  if (answerTimeoutId !== null) {
+    clearTimeout(answerTimeoutId);
+    answerTimeoutId = null;
+  }
+}
+
+function checkAnswer(){
+  const q = questions[idx];
+  const user = normalize(answerInput.value);
+  const correct = normalize(q.active);
+
+  if(!user){
+    feedback.textContent = "먼저 능동태 문장을 써 보세요!";
+    feedback.className = "feedback no";
+    return;
+  }
+
+  if(user === correct){
+    feedback.textContent = "정답입니다! 🎉";
+    feedback.className = "feedback ok";
+    nextBtn.disabled = false;
+    isCorrect = true;
+  }else{
+    feedback.textContent = "아쉽네요. 한 번 더 고쳐 볼까요?";
+    feedback.className = "feedback no";
+    nextBtn.disabled = true;
+    isCorrect = false;
+  }
+}
+
+// 정답 확인 버튼
+checkBtn.onclick = checkAnswer;
+
+// Enter 키: 정답 전이면 체크, 정답 후면 다음으로
+answerInput.addEventListener("keydown", e=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    if(!isCorrect){
+      checkAnswer();
+    }else{
+      goNext();
+    }
+  }
+});
+
+// 정답 보기 버튼 (3초 동안만 표시, 정답 처리 X)
+showAnswerBtn.onclick = () => {
+  const q = questions[idx];
+
+  // 이전 타이머 있으면 취소
+  if (answerTimeoutId !== null) {
+    clearTimeout(answerTimeoutId);
+    answerTimeoutId = null;
+  }
+
+  feedback.textContent = `정답: ${q.active}`;
+  feedback.className = "feedback ok";
+
+  // 정답을 보더라도 스스로 입력해야 하므로 입력칸은 비워 두기
+  answerInput.value = "";
+  nextBtn.disabled = true;
+  isCorrect = false;
+
+  // 3초 뒤 정답 표시 자동 숨김 (아직 정답을 맞히지 않은 경우에만)
+  answerTimeoutId = setTimeout(() => {
+    if (!isCorrect) {
+      feedback.textContent = "";
+      feedback.className = "feedback";
+    }
+    answerTimeoutId = null;
+  }, 3000);
+};
+
+function goNext(){
+  if(!isCorrect) return;
+  const next = idx + 1;
+  if(next < questions.length){
+    loadQuestion(next);
+  }else{
+    quizArea.style.display = "none";
+    doneArea.style.display = "block";
+  }
+}
+
+// 다음 문제 버튼
+nextBtn.onclick = goNext;
+
+// 첫 문제 로드
+loadQuestion(0);
+</script>
+</body>
+</html>
