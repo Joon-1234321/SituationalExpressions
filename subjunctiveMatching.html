@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>가정법 과거 문장 매칭게임 (If절 ↔ 주절)</title>
+<style>
+  :root{
+    --bg1:#dbeafe; --bg2:#ccfbf1;
+    --card:#ffffffcc; --panel:#ffffffb8;
+    --text:#0f172a; --muted:#475569;
+    --accent:#2563eb;
+    --ok:#22c55e; --no:#ef4444; --warn:#f59e0b;
+    --shadow:0 14px 34px rgba(2,6,23,.12);
+    --r:22px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    padding:18px;
+    font-size:2.025rem; /* 크게(1.5배 체감) */
+  }
+  header{
+    max-width:1100px;margin:0 auto 12px auto;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  }
+  h1{margin:0;font-size:1.6rem}
+  .sub{color:var(--muted);font-weight:800;font-size:.95em}
+  .pill{
+    background:rgba(15,23,42,.06);
+    border:1px solid rgba(15,23,42,.08);
+    padding:8px 10px;border-radius:999px;
+    font-weight:900;color:var(--muted);font-size:1em;
+  }
+  .wrap{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  @media (max-width:980px){ .wrap{grid-template-columns:1fr} }
+  .panel{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:var(--r);
+    box-shadow:var(--shadow);
+    padding:14px;
+    backdrop-filter: blur(10px);
+  }
+  .titleRow{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin-bottom:10px;
+  }
+  .panel h2{margin:0;font-size:1.25rem}
+  .hint{
+    font-size:.9em;color:var(--muted);font-weight:900;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .card{
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(2,6,23,.10);
+    border-radius:18px;
+    padding:14px;
+    box-shadow:0 10px 20px rgba(2,6,23,.08);
+    font-weight:1000;
+    line-height:1.25;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .08s ease, box-shadow .08s ease, opacity .15s ease;
+  }
+  .card:hover{transform:translateY(-1px)}
+  .card.selected{
+    outline:4px solid rgba(37,99,235,.25);
+    border-color:rgba(37,99,235,.35);
+  }
+  .card.ok{
+    outline:4px solid rgba(34,197,94,.25);
+    border-color:rgba(34,197,94,.35);
+  }
+  .card.no{
+    outline:4px solid rgba(239,68,68,.25);
+    border-color:rgba(239,68,68,.35);
+  }
+  .card.gone{
+    opacity:0;
+    pointer-events:none;
+    transform:scale(.98);
+  }
+  .bar{
+    max-width:1100px;margin:12px auto 0 auto;
+    background:rgba(255,255,255,.65);
+    border:1px solid rgba(2,6,23,.10);
+    border-radius:18px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  }
+  .btn{
+    border:0; cursor:pointer;
+    padding:12px 14px;border-radius:18px;
+    background:var(--accent); color:white;
+    font-weight:950; box-shadow:var(--shadow);
+    font-size:1.05rem;
+  }
+  .btn.ghost{background:rgba(15,23,42,.07); color:var(--text); border:1px solid rgba(2,6,23,.10); box-shadow:none}
+  .msg{
+    font-weight:950;
+  }
+  .msg.ok{color:#166534}
+  .msg.no{color:#991b1b}
+  .small{font-size:.9em;color:var(--muted);font-weight:900}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>문장 매칭게임: If절 ↔ 주절 (가정법 과거)</h1>
+    <div class="sub">왼쪽에서 If절 하나, 오른쪽에서 주절 하나를 클릭하세요. 맞으면 두 카드가 사라집니다.</div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <span class="pill">남은 쌍 <b id="remain">10</b></span>
+    <span class="pill">시도 <b id="tries">0</b></span>
+    <span class="pill">정답 <b id="hits">0</b></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="panel">
+    <div class="titleRow">
+      <h2>왼쪽: If절</h2>
+      <div class="hint">If + 과거</div>
+    </div>
+    <div class="grid" id="leftGrid"></div>
+  </section>
+
+  <section class="panel">
+    <div class="titleRow">
+      <h2>오른쪽: 주절</h2>
+      <div class="hint">could / would / might + 동사원형</div>
+    </div>
+    <div class="grid" id="rightGrid"></div>
+  </section>
+</div>
+
+<div class="bar">
+  <div>
+    <div class="msg" id="msg">카드를 선택해 보세요.</div>
+    <div class="small">팁: 문법+의미가 자연스럽게 이어지는 쌍을 찾기!</div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn ghost" id="resetSel">선택 해제</button>
+    <button class="btn" id="restart">다시 섞기</button>
+  </div>
+</div>
+
+<script>
+/* -----------------------------
+   위 20문항 중 10개 선택
+   (요청: 위 문장들 중 10문장만)
+------------------------------ */
+const PAIRS = [
+  { id:"p1", ifc:"If I had a car,", main:"I could drive to school." },
+  { id:"p2", ifc:"If she lived near here,", main:"she could visit us often." },
+  { id:"p3", ifc:"If we knew the answer,", main:"we could explain it." },
+  { id:"p4", ifc:"If he studied,", main:"he would get good grades." },
+  { id:"p5", ifc:"If I spoke English well,", main:"I could join the debate club." },
+  { id:"p6", ifc:"If they had a map,", main:"they could find the place." },
+  { id:"p7", ifc:"If I had your email,", main:"I could send you the file." },
+  { id:"p8", ifc:"If I practiced enough,", main:"I could play the piano well." },
+  { id:"p9", ifc:"If I were tall,", main:"I could reach the top shelf." },
+  { id:"p10", ifc:"If we left now,", main:"we could catch the bus." }
+];
+
+const $ = (s)=>document.querySelector(s);
+const leftGrid = $("#leftGrid");
+const rightGrid = $("#rightGrid");
+const remainEl = $("#remain");
+const triesEl = $("#tries");
+const hitsEl = $("#hits");
+const msgEl = $("#msg");
+
+let tries = 0;
+let hits = 0;
+let remaining = PAIRS.length;
+
+let selectedLeft = null;   // {id, el}
+let selectedRight = null;  // {id, el}
+let matched = new Set();   // pair ids matched
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function setMsg(text, kind=""){
+  msgEl.className = "msg";
+  msgEl.textContent = text;
+  if(kind==="ok") msgEl.classList.add("ok");
+  if(kind==="no") msgEl.classList.add("no");
+}
+
+function clearSelection(){
+  if(selectedLeft?.el) selectedLeft.el.classList.remove("selected");
+  if(selectedRight?.el) selectedRight.el.classList.remove("selected");
+  selectedLeft = null;
+  selectedRight = null;
+  setMsg("카드를 선택해 보세요.");
+}
+
+function build(){
+  matched = new Set();
+  selectedLeft = null;
+  selectedRight = null;
+  tries = 0; hits = 0; remaining = PAIRS.length;
+  triesEl.textContent = "0";
+  hitsEl.textContent = "0";
+  remainEl.textContent = String(remaining);
+  setMsg("카드를 선택해 보세요.");
+
+  leftGrid.innerHTML = "";
+  rightGrid.innerHTML = "";
+
+  const leftList = shuffle(PAIRS.map(p=>({id:p.id, text:p.ifc})));
+  const rightList = shuffle(PAIRS.map(p=>({id:p.id, text:p.main})));
+
+  leftList.forEach(item=>{
+    const el = document.createElement("div");
+    el.className = "card";
+    el.textContent = item.text;
+    el.dataset.id = item.id;
+    el.addEventListener("click", ()=>{
+      if(matched.has(item.id)) return;
+      if(selectedLeft?.el) selectedLeft.el.classList.remove("selected");
+      selectedLeft = {id:item.id, el};
+      el.classList.add("selected");
+      tryCheck();
+    });
+    leftGrid.appendChild(el);
+  });
+
+  rightList.forEach(item=>{
+    const el = document.createElement("div");
+    el.className = "card";
+    el.textContent = item.text;
+    el.dataset.id = item.id;
+    el.addEventListener("click", ()=>{
+      if(matched.has(item.id)) return;
+      if(selectedRight?.el) selectedRight.el.classList.remove("selected");
+      selectedRight = {id:item.id, el};
+      el.classList.add("selected");
+      tryCheck();
+    });
+    rightGrid.appendChild(el);
+  });
+}
+
+function tryCheck(){
+  if(!selectedLeft || !selectedRight) return;
+
+  tries++;
+  triesEl.textContent = String(tries);
+
+  const ok = selectedLeft.id === selectedRight.id;
+
+  if(ok){
+    hits++;
+    hitsEl.textContent = String(hits);
+    matched.add(selectedLeft.id);
+    remaining--;
+    remainEl.textContent = String(remaining);
+
+    selectedLeft.el.classList.remove("selected");
+    selectedRight.el.classList.remove("selected");
+    selectedLeft.el.classList.add("ok");
+    selectedRight.el.classList.add("ok");
+    setMsg("정답! ✅ 두 문장이 자연스럽게 연결돼요.", "ok");
+
+    // 사라지기 애니메이션 후 제거(여백 유지: gone만)
+    setTimeout(()=>{
+      selectedLeft.el.classList.add("gone");
+      selectedRight.el.classList.add("gone");
+      selectedLeft = null;
+      selectedRight = null;
+
+      if(remaining===0){
+        setMsg(`🎉 완료! 정답 ${hits}/${PAIRS.length} · 시도 ${tries}`, "ok");
+      }
+    }, 350);
+
+  }else{
+    // wrong feedback then unselect
+    selectedLeft.el.classList.add("no");
+    selectedRight.el.classList.add("no");
+    setMsg("틀렸어요 ❌ 의미가 자연스럽게 이어지는 다른 조합을 찾아보세요.", "no");
+
+    setTimeout(()=>{
+      selectedLeft?.el?.classList.remove("no","selected");
+      selectedRight?.el?.classList.remove("no","selected");
+      selectedLeft = null;
+      selectedRight = null;
+      setMsg("다시 선택해 보세요.");
+    }, 550);
+  }
+}
+
+$("#resetSel").addEventListener("click", clearSelection);
+$("#restart").addEventListener("click", build);
+
+// Enter 키로는 선택 해제(전자칠판 편의)
+window.addEventListener("keydown", (e)=>{
+  if(e.key==="Escape" || e.key==="Enter"){
+    clearSelection();
+  }
+});
+
+build();
+</script>
+</body>
+</html>
